@@ -1,7 +1,8 @@
-import sys
+import os
 from pyparsing import *
+import matplotlib.pyplot as plt
 
-def searchFile(file_or_filename, string, maxMatches=sys.maxsize):
+def searchFileGrammer(file_or_filename, grammer):
         """
         Execute the keyword (string) search on the given file or filename.
         If a filename is specified (instead of a file object),
@@ -15,7 +16,39 @@ def searchFile(file_or_filename, string, maxMatches=sys.maxsize):
             with open(file_or_filename, "r") as f:
                 file_contents = f.read()
         try:
-            return OneOrMore(CaselessKeyword(string).ignore(cppStyleComment)).searchString(file_contents, maxMatches)
+            return grammer.searchString(file_contents)
+        except ParseBaseException as exc:
+            if ParserElement.verbose_stacktrace:
+                raise
+            else:
+                # catch and re-raise exception from here, clears out pyparsing internal stack trace
+                raise exc
+
+def makeGrammer(string):
+    Keyword = CaselessKeyword(string) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
+    value = Suppress('=' + Word(printables))
+    datatype = Word(alphas) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
+    name = (Optional("&")^Optional("*")) + Word(printables) + Optional(FollowedBy("("))
+    
+    Grammer = Keyword + name+ (Optional(FollowedBy(","))^Optional(FollowedBy(")"))) + Optional(value) + Optional(";")
+    Grammer = Grammer.ignore(cppStyleComment)
+    return Grammer
+
+def searchFile(file_or_filename, string):
+        """
+        Execute the keyword (string) search on the given file or filename.
+        If a filename is specified (instead of a file object),
+        the entire file is opened, read, and closed before parsing.
+        May be called with optional
+        ``maxMatches`` argument, to clip searching after 'n' matches are found.        
+        """
+        try:
+            file_contents = file_or_filename.read()
+        except AttributeError:
+            with open(file_or_filename, "r") as f:
+                file_contents = f.read()
+        try:
+            return OneOrMore(CaselessKeyword(string).ignore(cppStyleComment)).searchString(file_contents)
         except ParseBaseException as exc:
             if ParserElement.verbose_stacktrace:
                 raise
@@ -37,15 +70,23 @@ def plot(x,y):
     plt.title('Keyword Occurences')
     plt.show()
     
-keywords = ['const','class','enum','enum class','bool','namespace','shared_ptr']
+keywords = ['const','class','enum','bool','namespace','shared_ptr', 'vector']
 #
+directory = "D:\Ashraf\Documents\.University_Stuff\.4th Year\ELEN4012 - Lab Project\Parsing\Source Code"
+
 x = []
+use_cases =[]
 for keyword in keywords:
 #for file in files:
     count = 0
-    for filename in os.listdir(os.getcwd()):
-    #print('Checking file: ' + filename)
-        count += checkKeywords(filename,keyword)
+    for filename in os.listdir(directory):
+        #print('Checking file: ' + filename)
+        file = directory+os.sep+filename
+        #count += checkKeywords(file,keyword)
+        y = searchFileGrammer(file,makeGrammer(keyword))
+        print(y)
+        use_cases.append(y)
+        count += len(y)
     x.append(count)
     print('Instances of use of ' + keyword + ' keyword: ' + str(count))
 plot(keywords,x)
