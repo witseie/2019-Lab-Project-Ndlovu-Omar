@@ -25,12 +25,13 @@ def searchFileGrammer(file_or_filename, grammer):
                 raise exc
 
 def makeGrammer(string):
-    Keyword = CaselessKeyword(string) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
-    value = Suppress('=' + Word(printables))
-    datatype = Word(alphas) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
-    name = (Optional("&")^Optional("*")) + Word(printables) + Optional(FollowedBy("("))
-    
-    Grammer = Keyword + name+ (Optional(FollowedBy(","))^Optional(FollowedBy(")"))) + Optional(value) + Optional(";")
+    cppName = alphanums + ':_()<>'
+    if string != 'const':
+        keyword = Optional(Char(',')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string) | Optional(Char('(')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string)
+    else:
+        keyword = Optional(Char(',')) + CaselessKeyword(string) | Optional(Char('(')) + CaselessKeyword(string)
+    name =  Word(cppName) + Optional(Word(cppName))
+    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + name
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
@@ -70,7 +71,7 @@ def plot(x,y):
     plt.title('Keyword Occurences')
     plt.show()
     
-keywords = ['const','class','enum','bool','namespace','shared_ptr', 'vector']
+keywords = ['const','class','enum','bool', 'vector']
 #
 directory = "D:\Ashraf\Documents\.University_Stuff\.4th Year\ELEN4012 - Lab Project\Parsing\Source Code"
 

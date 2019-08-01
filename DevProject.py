@@ -9,15 +9,28 @@ import os
 import matplotlib.pyplot as plt
 keywords = ['const','class','bool','vector']
 
+
 def makeGrammer(string):
-    keyword = CaselessKeyword(string) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
-    value = Suppress('=' + Word(printables))
-    datatype = Word(alphas) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
-    name = (Optional("&")^Optional("*")) + Word(printables)# + Optional(FollowedBy("("))
-    
-    Grammer = keyword + name + (Optional(FollowedBy(","))^Optional(FollowedBy(")"))) + Optional(value) + Optional(";")
+    cppName = alphanums + ':_()<>'
+    if string != 'const':
+        keyword = Optional(Char(',')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string) | Optional(Char('(')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string)
+    else:
+        keyword = Optional(Char(',')) + CaselessKeyword(string) | Optional(Char('(')) + CaselessKeyword(string)
+    name =  Word(cppName) + Optional(Word(cppName))
+    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + name
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
+
+
+#def makeGrammer(string):
+#    keyword = CaselessKeyword(string) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
+#    value = Suppress('=' + Word(printables))
+#    datatype = Word(alphas) + (Optional(FollowedBy("&"))^Optional(FollowedBy("*")))
+#    name = (Optional("&")^Optional("*")) + Word(printables)# + Optional(FollowedBy("("))
+#    
+#    Grammer = keyword + name + (Optional(FollowedBy(","))^Optional(FollowedBy(")"))) + Optional(value) + Optional(";")
+#    Grammer = Grammer.ignore(cppStyleComment)
+#    return Grammer
 
 def plot(x,y):
     plt.bar(x,y,width = 0.5,label = "Keywords")
@@ -120,15 +133,15 @@ class Result:
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
 #For testing purposes:
-a = DevProject('D:\Ashraf\Documents\.University_Stuff\.4th Year\ELEN4012 - Lab Project\Parsing\Source Code')
+#a = DevProject('D:\Ashraf\Documents\.University_Stuff\.4th Year\ELEN4012 - Lab Project\Parsing\Source Code')
 #print('\n')
-#for file in x.getFiles():
+#for file in a.getFiles():
 #    print(file.getName()+'\n')
 #    for result in file.getResults():
 #        result.printResult()
-print('\n')
-y = []   
-for result in a.getResults():
-    y.append(result.getCount())
-    result.printResult()
-plot(keywords,y)
+#print('\n')
+#y = []
+#for result in a.getResults():
+#    y.append(result.getCount())
+#    result.printResult()
+#plot(keywords,y)
