@@ -7,7 +7,7 @@ Created on Thu Aug  1 08:13:01 2019
 from pyparsing import *
 import os
 import matplotlib.pyplot as plt
-keywords = ['const','class','bool','vector']
+keywords = ['const','class','bool','vector','static']
 
 
 def makeGrammer(string):
@@ -52,11 +52,10 @@ class DevProject:
             files.append(x)
         return files
     def getFiles(self, index = 'ALL'):
-        if index == 'ALL':
-            f = self.__files
-        else: 
-            f = self.__files[index]
-        return f
+        files = []
+        if len(self.__files):
+            files = self.__files if index == 'ALL' else self.__files[index]
+        return files
     def getFileContents(self, index = 'ALL'):
         if index == 'ALL':
             contents = []
@@ -101,7 +100,7 @@ class File:
             grammer = makeGrammer(keyword)
             inst = grammer.searchString(self.__contents)
             count = len(inst)
-            res = Result(keyword,count,inst)
+            res = Result(keyword,count,inst.asList())
             results.append(res)
         return results
     def getName(self):
@@ -109,24 +108,23 @@ class File:
     def getContents(self):
         return str(self.__contents)
     def getResults(self, index = 'ALL'):
-        if index == 'ALL':
-            res = self.__results
-        else: 
-            res = self.__results[index]
+        res = []
+        if len(self.__results):
+            res = self.__results if index == 'ALL' else self.__results[index]
         return res
 
 class Result:
     def __init__(self, keyword, count, inst = []):
         self.__keyword = keyword
         self.__count = count
-        self.__instances = inst
-    def setInst(self,inst):
-        self.__instances = inst
-        self.__count = len(inst)
+        self.__use_cases = [inst.count([';']) , inst.count(['(']) + inst.count([',']) , inst.count([])]
     def getCount(self):
         return self.__count
-    def getInst(self):
-        return self.__instances
+    def getUseCases(self, index = 'ALL'):
+        cases = []
+        if len(self.__use_cases):
+            cases = self.__use_cases if index == 'ALL' else self.__use_cases[index]
+        return cases
     def printResult(self):
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
@@ -137,6 +135,7 @@ class Result:
 #    print(file.getName()+'\n')
 #    for result in file.getResults():
 #        result.printResult()
+#        print(result.getUseCases())
 #print('\n')
 #y = []
 #for result in a.getResults():
