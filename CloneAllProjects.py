@@ -4,7 +4,14 @@ Created on Mon Aug  5 18:35:30 2019
 
 @author: Ashraf
 """
-import requests, json, os, getpass
+import requests, json, os, getpass, shutil
+
+def main():
+    user, pswd, access_token = getInput()
+    if access_token:
+        cloneAllProjects(user, pswd, access_token)
+    else:
+        cloneAllProjects(user, pswd)
 
 def cloneAllProjects(user, pswd, access_token = '146da8c3ad930d598318a94068fe158c716f6496', directory = os.getcwd() + os.sep + r'Repositories'):
     filename = os.getcwd() + os.sep + 'Repos.json'
@@ -30,8 +37,10 @@ def cloneAllProjects(user, pswd, access_token = '146da8c3ad930d598318a94068fe158
         os.makedirs(directory)
     os.chdir(directory)    
     for repo in json_string:
-        print('Cloning repository: ' + repo['full_name'])
+        name = repo['full_name']
+        print('Cloning repository: ' + name)
         os.system('git clone ' + repo['ssh_url'])
+    print('Done.')
 
 def getInput():
     while True:
@@ -46,12 +55,12 @@ def getInput():
     return user, pswd , access_token
 
 if __name__ == '__main__':
-    user, pswd, access_token = getInput()
-    if access_token:
-        cloneAllProjects(user, pswd, access_token)
-    else:
-        cloneAllProjects(user, pswd)
-    
-
-    
-    
+    main()
+    print('Removing demi repos...')
+    demis = ['2018-project-560895-Linda','2018-project-571133-Kyle','2018-project-714227-Kayla','2018-project-717931-Kishan','2018-project-816424-Conrad','2018-project-837873-Malu']
+    for folder in demis:
+        try:
+            shutil.rmtree(os.getcwd()+os.sep+folder)
+        except OSError as e:
+            print ("Error: %s - %s." % (e.filename, e.strerror))
+    k = input('Press enter to exit...')
