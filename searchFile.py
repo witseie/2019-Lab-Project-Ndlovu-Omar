@@ -26,12 +26,16 @@ def searchFileGrammer(file_or_filename, grammer):
 
 def makeGrammer(string):
     cppName = alphanums + ':_()<>'
+    constKeyword = Suppress(Optional(CaselessKeyword("const")))
     if string != 'const':
-        keyword = Optional(Char(',')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string) | Optional(Char('(')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string)
+        keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string))
     else:
-        keyword = Optional(Char(',')) + CaselessKeyword(string) | Optional(Char('(')) + CaselessKeyword(string)
-    name =  Word(cppName) + Optional(Word(cppName))
-    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + name
+        keyword = Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
+    if string == 'class':
+        name =  Word(cppName) + Char(':') + CaselessKeyword('public') | Word(cppName) + Char('{') + CaselessKeyword('public')
+    else:
+        name =  Word(cppName) + Optional(Word(cppName))
+    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
