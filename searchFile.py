@@ -25,17 +25,11 @@ def searchFileGrammer(file_or_filename, grammer):
                 raise exc
 
 def makeGrammer(string):
-    cppName = alphanums + ':_()<>'
+    cppName = alphanums + ':_<'
     constKeyword = Suppress(Optional(CaselessKeyword("const")))
-    if string != 'const':
-        keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string))
-    else:
-        keyword = Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
-    if string == 'class':
-        name =  Word(cppName) + Char(':') + CaselessKeyword('public') | Word(cppName) + Char('{') + CaselessKeyword('public')
-    else:
-        name =  Word(cppName) + Optional(Word(cppName))
-    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
+    keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string)) if not string == 'const' else Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
+    name =  Word(cppName) + Char(':') + CaselessKeyword('public') | Word(cppName) + Char('{') + CaselessKeyword('public') if string == 'class' else Word(cppName) + Optional(Word(cppName))
+    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name) + Optional(Char(';')) if string == 'static' else keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 

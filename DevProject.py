@@ -11,13 +11,11 @@ keywords = ['const','class','bool','vector']
 
 
 def makeGrammer(string):
-    cppName = alphanums + ':_()<>'
-    if string != 'const':
-        keyword = Optional(Char(',')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string) | Optional(Char('(')) + Optional(CaselessKeyword("const")) + CaselessKeyword(string)
-    else:
-        keyword = Optional(Char(',')) + CaselessKeyword(string) | Optional(Char('(')) + CaselessKeyword(string)
-    name =  Word(cppName) + Optional(Word(cppName))
-    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + name
+    cppName = alphanums + ':_<'
+    constKeyword = Suppress(Optional(CaselessKeyword("const")))
+    keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string)) if not string == 'const' else Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
+    name =  Word(cppName) + Char(':') + CaselessKeyword('public') | Word(cppName) + Char('{') + CaselessKeyword('public') if string == 'class' else Word(cppName) + Optional(Word(cppName))
+    Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name) + Optional(Char(';')) if string == 'static' else keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
