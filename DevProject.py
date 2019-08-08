@@ -7,7 +7,7 @@ Created on Thu Aug  1 08:13:01 2019
 from pyparsing import *
 import os
 import matplotlib.pyplot as plt
-keywords = ['const','class','bool','vector','static']
+keywords = ['const','class','enum', 'enum class','vector','static']
 
 
 def makeGrammer(string):
@@ -106,7 +106,8 @@ class Result:
     def __init__(self, keyword, count, inst = []):
         self.__keyword = keyword
         self.__count = count
-        self.__use_cases = [inst.count([';']) , inst.count(['(']) + inst.count([',']) , inst.count([])]
+        self.__inst = inst
+        self.__use_cases = [self.__inst.count([';']) + self.__inst.count(['{']) , self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([])]
     def getCount(self):
         return self.__count
     def getUseCases(self, index = 'ALL'):
