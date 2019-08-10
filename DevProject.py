@@ -58,11 +58,14 @@ class DevProject:
         idx = 0
         for keyword in keywords:
             count = 0
-            inst = []
+            use_cases = [0, 0, 0]
             for file in self.__files:
                 count += file.getResults(idx).getCount()
-                inst +=file.getResults(idx).getUseCases()
-            res = Result(keyword,count,inst)
+                use_cases[0] +=file.getResults(idx).getUseCases(0)
+                use_cases[1] +=file.getResults(idx).getUseCases(1)
+                use_cases[2] +=file.getResults(idx).getUseCases(2)
+            res = Result(keyword,count)
+            res.setUseCases(use_cases)
             results.append(res)
             idx+=1
         return results
@@ -117,6 +120,8 @@ class Result:
         if len(self.__use_cases):
             cases = self.__use_cases if index == 'ALL' else self.__use_cases[index]
         return cases
+    def setUseCases(self,use_cases):
+        self.__use_cases = use_cases
     def printResult(self):
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
