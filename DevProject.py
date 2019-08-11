@@ -5,7 +5,7 @@ Created on Thu Aug  1 08:13:01 2019
 @author: Ashraf
 """
 from pyparsing import *
-import os, multiprocessing
+import os, multiprocessing, pickle
 import matplotlib.pyplot as plt
 keywords = ['const','class','enum', 'enum class','vector','static']
 
@@ -42,6 +42,29 @@ def threadJob(func):
 	# Ensure all of the threads have finished
     for j in jobs:
         j.join()
+
+def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
+    Projects = []
+    for name in os.listdir(repoDirectory):
+        Projects.append(AnalyseProject(name))
+    return Projects
+
+def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cacheDirectory = os.getcwd()+os.sep+r'.cache'):
+    if not os.path.exists(cacheDirectory):
+        os.makedirs(cacheDirectory)
+    filename =  cacheDirectory+os.sep+name+'.pkl'
+    if not os.path.exists(filename):
+        Project = DevProject(repoDirectory+os.sep+name+os.sep+'game-source-code')
+        print('Analysing ' + name)
+        Project.readResults()
+        print('Done')
+        with open(filename, 'wb') as file_output:
+            pickle.dump(Project, file_output, pickle.HIGHEST_PROTOCOL)
+    else:
+        print('Analysis of '+name+' previously completed. Loading results from cache.')
+        with open(filename, 'rb') as file_input:
+            Project = pickle.load(file_input)
+    return Project
 
 class DevProject:
     def __init__(self, directory):
