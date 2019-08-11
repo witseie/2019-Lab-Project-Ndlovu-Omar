@@ -64,7 +64,15 @@ def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cac
         print('Analysis of '+name+' previously completed. Loading results from cache.')
         with open(filename, 'rb') as file_input:
             Project = pickle.load(file_input)
+    plotProjectResults(Project)
     return Project
+
+def plotProjectResults(project):
+    result_count = []
+    for result in project.getResults():
+        result_count.append(result.getCount())
+        result.printResult()
+    plot(keywords, result_count)
 
 class DevProject:
     def __init__(self, directory):
