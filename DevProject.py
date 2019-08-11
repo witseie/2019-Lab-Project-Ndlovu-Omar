@@ -5,9 +5,12 @@ Created on Thu Aug  1 08:13:01 2019
 @author: Ashraf
 """
 from pyparsing import *
-import os, multiprocessing
+
+import os, multiprocessing, pickle
+import numpy as np
 import matplotlib.pyplot as plt
 keywords = ['const','class','enum', 'enum class','vector','static']
+weights = []
 
 
 def makeGrammer(string):
@@ -19,12 +22,26 @@ def makeGrammer(string):
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
-def plot(x,y):
-    plt.bar(x,y,width = 0.5,label = "Keywords")
+
+def plot(weights,keyword):
+    barWidth = 0.25
+ 
+# set height of bar
+
+# Set position of bar on X axis
+    r1 = np.arange(1)
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+# Make the plot
+    plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
+    plt.bar(r2, weights[1], color='#557f2d', width=barWidth, edgecolor='white', label='as an argument')
+    plt.bar(r3, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
+ 
+# Add xticks on the middle of the group bars
+    plt.xlabel('group', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(weights))], [keyword])
     plt.legend()
-    plt.xlabel('Keyword')
-    plt.ylabel('No. of Occurances')
-    plt.title('Keyword Occurences')
     plt.show()
 
 def threadJob(func):
@@ -43,6 +60,37 @@ def threadJob(func):
     for j in jobs:
         j.join()
 
+def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
+    Projects = []
+    for name in os.listdir(repoDirectory):
+        Projects.append(AnalyseProject(name))
+    return Projects
+
+def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cacheDirectory = os.getcwd()+os.sep+r'.cache'):
+    if not os.path.exists(cacheDirectory):
+        os.makedirs(cacheDirectory)
+    filename =  cacheDirectory+os.sep+name+'.pkl'
+    if not os.path.exists(filename):
+        Project = DevProject(repoDirectory+os.sep+name+os.sep+'game-source-code')
+        print('Analysing ' + name)
+        Project.readResults()
+        print('Done')
+        with open(filename, 'wb') as file_output:
+            pickle.dump(Project, file_output, pickle.HIGHEST_PROTOCOL)
+    else:
+        print('Analysis of '+name+' previously completed. Loading results from cache.')
+        with open(filename, 'rb') as file_input:
+            Project = pickle.load(file_input)
+    plotProjectResults(Project)
+    return Project
+
+def plotProjectResults(project):
+    result_count = []
+    for result in project.getResults():
+        result_count.append(result.getCount())
+        result.printResult()
+    #plot(keywords, result_count)
+    
 class DevProject:
     def __init__(self, directory):
         self.__directory = directory
@@ -136,7 +184,7 @@ class Result:
     def getCount(self):
         return self.__count
     def getUseCases(self, index = 'ALL'):
-        cases = []
+        cases = [] 
         if len(self.__use_cases):
             cases = self.__use_cases if index == 'ALL' else self.__use_cases[index]
         return cases
@@ -146,3 +194,4 @@ class Result:
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
         print(self.__use_cases)
+        plot(self.__use_cases,self.__keyword)
