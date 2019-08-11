@@ -5,7 +5,7 @@ Created on Thu Aug  1 08:13:01 2019
 @author: Ashraf
 """
 from pyparsing import *
-import os
+import os, multiprocessing
 import matplotlib.pyplot as plt
 keywords = ['const','class','enum', 'enum class','vector','static']
 
@@ -27,11 +27,27 @@ def plot(x,y):
     plt.title('Keyword Occurences')
     plt.show()
 
+def threadJob(func):
+	# Create a list of jobs and then iterate through
+	# the number of threads appending each thread to
+	# the job list
+    num_threads = multiprocessing.cpu_count()
+    jobs = []
+    for i in range(0, num_threads):
+        thread = multiprocessing.Process(target=func)
+        jobs.append(thread)
+	# Start the threads
+    for j in jobs:
+        j.start()
+	# Ensure all of the threads have finished
+    for j in jobs:
+        j.join()
+
 class DevProject:
     def __init__(self, directory):
         self.__directory = directory
         self.__files = self.readFiles()
-        self.__results = self.readResults()
+        self.__results = []
     def __repr__(self):
         return str(self.__directory)
     def readFiles(self):
@@ -53,7 +69,11 @@ class DevProject:
         else:
             contents = self.__files[index].getContents()
         return contents
+    def readFileResults(self):
+        for file in self.__files:
+            file.readResults()
     def readResults(self):
+        threadJob(self.readFileResults())
         results = []
         idx = 0
         for keyword in keywords:
@@ -68,7 +88,7 @@ class DevProject:
             res.setUseCases(use_cases)
             results.append(res)
             idx+=1
-        return results
+        self.__results = results
     def getResults(self):
         return self.__results
         
@@ -77,7 +97,7 @@ class File:
         self.__name = name
         self.__directory = directory
         self.__contents = self.readContents()
-        self.__results = self.readResults()
+        self.__results = []
     def __repr__(self):
         return str(self.__name)
     def readContents(self):
@@ -96,7 +116,7 @@ class File:
             count = len(inst)
             res = Result(keyword,count,inst.asList())
             results.append(res)
-        return results
+        self.__results = results
     def getName(self):
         return str(self.__name)
     def getContents(self):
