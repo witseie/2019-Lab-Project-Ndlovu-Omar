@@ -39,7 +39,7 @@ entry_2.grid(row=0,column=4)
 button_1.grid(row=1,column=0)
 button_2.grid(row=1,column=1)
 
-flist = os.listdir(r'C:\Users\user\Desktop\labproject\Lab Project\Repositories')
+flist = os.listdir(os.getcwd()+os.sep+r'Repositories')
 
 lbox = Listbox(my_window,width = 30, height = 15, selectmode = SINGLE)
 lbox.grid(row=4,column=0)

@@ -5,12 +5,13 @@ Created on Thu Aug  1 08:13:01 2019
 @author: Ashraf
 """
 from pyparsing import *
+
 import os, multiprocessing, pickle
 import numpy as np
 import matplotlib.pyplot as plt
-keywords = ['const','static']
+keywords = ['const','class','enum', 'enum class','vector','static']
 weights = []
-#'class','enum', 'enum class','vector',
+
 
 def makeGrammer(string):
     cppName = alphanums + ':_<'
@@ -20,6 +21,7 @@ def makeGrammer(string):
     Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name) + Optional(Char(';')) if string == 'static' else keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
+
 
 def plot(weights,keyword):
     barWidth = 0.25
@@ -88,7 +90,6 @@ def plotProjectResults(project):
         result_count.append(result.getCount())
         result.printResult()
     #plot(keywords, result_count)
-    
     
 class DevProject:
     def __init__(self, directory):
@@ -194,7 +195,3 @@ class Result:
         print(string)
         print(self.__use_cases)
         plot(self.__use_cases,self.__keyword)
-        
-
-
-        
