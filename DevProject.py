@@ -4,13 +4,18 @@ Created on Thu Aug  1 08:13:01 2019
 
 @author: Ashraf
 """
-from pyparsing import *
-import os, multiprocessing, pickle
+import os, pickle
+import numpy as np
 import matplotlib.pyplot as plt
-keywords = ['const','class','enum', 'enum class','vector','static']
+keywords = ['const','static','class','enum', 'enum class','vector']
+weights = []
 
+def removeComments(string):
+    from pyparsing import nestedExpr, dblSlashComment, Suppress
+    return (Suppress(nestedExpr('/*','*/') | dblSlashComment)).transformString(string)
 
 def makeGrammer(string):
+    from pyparsing import alphanums, Suppress, Optional, CaselessKeyword, Char, Word, cppStyleComment
     cppName = alphanums + ':_<'
     constKeyword = Suppress(Optional(CaselessKeyword("const")))
     keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string)) if not string == 'const' else Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
@@ -19,29 +24,33 @@ def makeGrammer(string):
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
-def plot(x,y):
-    plt.bar(x,y,width = 0.5,label = "Keywords")
-    plt.legend()
-    plt.xlabel('Keyword')
-    plt.ylabel('No. of Occurances')
-    plt.title('Keyword Occurences')
-    plt.show()
+def plot(weights,keyword):
+#    if keyword == 'const' or keyword == 'static':
+    barWidth = 0.25
+ 
+# set height of bar
 
-def threadJob(func):
-	# Create a list of jobs and then iterate through
-	# the number of threads appending each thread to
-	# the job list
-    num_threads = multiprocessing.cpu_count()
-    jobs = []
-    for i in range(0, num_threads):
-        thread = multiprocessing.Process(target=func)
-        jobs.append(thread)
-	# Start the threads
-    for j in jobs:
-        j.start()
-	# Ensure all of the threads have finished
-    for j in jobs:
-        j.join()
+# Set position of bar on X axis
+    r1 = np.arange(1)
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+# Make the plot
+    if keyword == 'const':
+        plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
+        plt.bar(r2, weights[1], color='#557f2d', width=barWidth, edgecolor='white', label='as an argument')
+        plt.bar(r3, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
+    elif keyword == 'static':
+        plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
+        plt.bar(r2, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
+#    else:
+#        plt.bar(r1, weights[0] + weights[1] + weights[2], width=barWidth, edgecolor='white', label='occurances')
+# Add xticks on the middle of the group bars
+    plt.xlabel('group', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(weights))], [keyword])
+    plt.legend()
+    if keyword == 'const' or keyword == 'static':
+        plt.show()
 
 def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
     Projects = []
@@ -64,15 +73,19 @@ def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cac
         print('Analysis of '+name+' previously completed. Loading results from cache.')
         with open(filename, 'rb') as file_input:
             Project = pickle.load(file_input)
-    plotProjectResults(Project)
+#    plotProjectResults(Project)
     return Project
 
 def plotProjectResults(project):
     result_count = []
     for result in project.getResults():
-        result_count.append(result.getCount())
+        if not (result.getKeyword() == 'const' or result.getKeyword() == 'static'):
+            result_count.append(result.getCount())
+            plt.bar(result.getKeyword(),result.getCount(),width = 0.5,label = result.getKeyword())
         result.printResult()
-    plot(keywords, result_count)
+    plt.legend()
+    plt.xlabel('Keyword', fontweight='bold')
+    plt.show()
 
 class DevProject:
     def __init__(self, directory):
@@ -84,8 +97,9 @@ class DevProject:
     def readFiles(self):
         files = []
         for filename in os.listdir(self.__directory):
-            x = File(self.__directory,filename)
-            files.append(x)
+            if filename.endswith(".h") or filename.endswith(".cpp"):
+                x = File(self.__directory,filename)
+                files.append(x)
         return files
     def getFiles(self, index = 'ALL'):
         files = []
@@ -104,7 +118,7 @@ class DevProject:
         for file in self.__files:
             file.readResults()
     def readResults(self):
-        threadJob(self.readFileResults())
+        self.readFileResults()
         results = []
         idx = 0
         for keyword in keywords:
@@ -138,6 +152,7 @@ class File:
         except AttributeError:
             with open(filename, "r") as f:
                 file_contents = f.read()
+                file_contents = removeComments(file_contents)
         return file_contents
     def readResults(self):
         results = []
@@ -163,7 +178,9 @@ class Result:
         self.__keyword = keyword
         self.__count = count
         self.__inst = inst
-        self.__use_cases = [self.__inst.count([';']) + self.__inst.count(['{']) , self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([])]
+        self.__use_cases = [self.__inst.count([]), self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([';']) + self.__inst.count(['{'])] if self.__keyword == 'static' else [self.__inst.count([';']) + self.__inst.count(['{']) , self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([])]
+    def getKeyword(self):
+        return self.__keyword
     def getCount(self):
         return self.__count
     def getUseCases(self, index = 'ALL'):
@@ -177,3 +194,4 @@ class Result:
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
         print(self.__use_cases)
+        plot(self.__use_cases,self.__keyword)
