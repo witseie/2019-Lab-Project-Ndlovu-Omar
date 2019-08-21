@@ -24,6 +24,43 @@ def makeGrammer(string):
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
+def functionGrammer():
+    from pyparsing import (oneOf, Word, alphas, alphanums, Combine, Optional, Group, nestedExpr, Suppress, quotedString, cppStyleComment, delimitedList, CaselessKeyword, Char)
+    data_type = oneOf("void int short long char float double")
+    ident = Word(alphas+'_<', alphanums+':_<>,') + ~Word('\n')
+    decl_data_type = Combine(ident + Optional(Word('*')|Word('&'))) | Combine(data_type + Optional(Word('*')|Word('&')))
+    arg = Group(decl_data_type + ident)
+    LPAR,RPAR = map(Suppress, "()")
+    code_body = nestedExpr('{', '}', ignoreExpr=(quotedString | cppStyleComment))
+    c_function = (decl_data_type("type")
+                  + ident("name")
+                  + LPAR + Optional(delimitedList(arg), [])("args") + RPAR
+                  + Optional(code_body("body")))
+    c_function = c_function.ignore(cppStyleComment)
+    virtual_function = CaselessKeyword('virtual') + Group(c_function + Optional(Char('=') + Char('0') + Char(';')))
+    virtual_function = virtual_function.ignore(cppStyleComment)
+    override_func = c_function + CaselessKeyword('override')
+    override_func = override_func.ignore(cppStyleComment)
+    return c_function, virtual_function, override_func
+
+c_function, virtual_function, override_func = functionGrammer()
+
+def classGrammer():
+    from pyparsing import Word, alphas, alphanums, CaselessKeyword, Suppress, Group, nestedExpr, Char, originalTextFor, delimitedList, Optional
+    cppName = Word(alphas+':_', alphanums+':_')
+    class_keyword = Suppress(CaselessKeyword('class'))
+    class_name =  cppName
+    class_body = Group(nestedExpr('{', '}') + Char(';'))
+    parent_class = Group(Suppress(CaselessKeyword('public')) + class_name)
+    inherits =  Suppress(Char(':')) + delimitedList(parent_class)
+    scoped_enum = Group(CaselessKeyword('enum') + class_keyword + class_name + class_body)
+    
+    Grammer = (class_keyword + class_name("name") + Optional(inherits)("parents") + (originalTextFor(class_body)("body")))
+    Grammer = Grammer.ignore(scoped_enum)
+    return Grammer
+
+cpp_class = classGrammer()
+
 def plot(weights,keyword):
 #    if keyword == 'const' or keyword == 'static':
     barWidth = 0.25
@@ -92,6 +129,10 @@ class DevProject:
         self.__directory = directory
         self.__files = self.readFiles()
         self.__results = []
+        self.classes = []
+        self.inheritances = []
+        self.abstr_base_classes = []
+        self.overrides = 0
     def __repr__(self):
         return str(self.__directory)
     def readFiles(self):
@@ -117,6 +158,17 @@ class DevProject:
     def readFileResults(self):
         for file in self.__files:
             file.readResults()
+            if file.getName().endswith('.h'):
+                classes = cpp_class.searchString(file.getContents())
+                for item in classes:
+                    temp = cppClass(item)
+                    self.classes.append(temp)
+                    if temp.inheritance:
+                        self.inheritances.append(temp.name)
+                    if temp.abstr_base_class:
+                        self.abstr_base_classes.append(temp.name)
+                    self.overrides += temp.override
+    
     def readResults(self):
         self.readFileResults()
         results = []
@@ -195,3 +247,17 @@ class Result:
         print(string)
         print(self.__use_cases)
         plot(self.__use_cases,self.__keyword)
+        
+class cppClass:
+    def __init__(self, parseRes):
+        temp = parseRes
+        self.name = temp.name
+        self.parents = temp.parents.asList() if temp.parents else []
+        self.body = temp.body
+        self.functions = c_function.searchString(self.body).asList()
+        self.abstr_functions = virtual_function.searchString(self.body).asList()
+        self.override_functions = override_func.searchString(self.body).asList()
+        
+        self.inheritance = 1 if self.parents else 0
+        self.abstr_base_class = 1 if (len(self.functions)==len(self.abstr_functions) and len(self.functions) != 0) else 0
+        self.override = 1 if (len(self.override_functions) != 0) else 0
