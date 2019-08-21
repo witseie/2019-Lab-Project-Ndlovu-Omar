@@ -4,16 +4,18 @@ Created on Thu Aug  1 08:13:01 2019
 
 @author: Ashraf
 """
-from pyparsing import *
-
-import os, multiprocessing, pickle
+import os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
-keywords = ['const','class','enum', 'enum class','vector','static']
+keywords = ['const','static','class','enum', 'enum class','vector']
 weights = []
 
+def removeComments(string):
+    from pyparsing import nestedExpr, dblSlashComment, Suppress
+    return (Suppress(nestedExpr('/*','*/') | dblSlashComment)).transformString(string)
 
 def makeGrammer(string):
+    from pyparsing import alphanums, Suppress, Optional, CaselessKeyword, Char, Word, cppStyleComment
     cppName = alphanums + ':_<'
     constKeyword = Suppress(Optional(CaselessKeyword("const")))
     keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string)) if not string == 'const' else Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
@@ -22,8 +24,45 @@ def makeGrammer(string):
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
+def functionGrammer():
+    from pyparsing import (oneOf, Word, alphas, alphanums, Combine, Optional, Group, nestedExpr, Suppress, quotedString, cppStyleComment, delimitedList, CaselessKeyword, Char)
+    data_type = oneOf("void int short long char float double")
+    ident = Word(alphas+'_<', alphanums+':_<>,') + ~Word('\n')
+    decl_data_type = Combine(ident + Optional(Word('*')|Word('&'))) | Combine(data_type + Optional(Word('*')|Word('&')))
+    arg = Group(decl_data_type + ident)
+    LPAR,RPAR = map(Suppress, "()")
+    code_body = nestedExpr('{', '}', ignoreExpr=(quotedString | cppStyleComment))
+    c_function = (decl_data_type("type")
+                  + ident("name")
+                  + LPAR + Optional(delimitedList(arg), [])("args") + RPAR
+                  + Optional(code_body("body")))
+    c_function = c_function.ignore(cppStyleComment)
+    virtual_function = CaselessKeyword('virtual') + Group(c_function + Optional(Char('=') + Char('0') + Char(';')))
+    virtual_function = virtual_function.ignore(cppStyleComment)
+    override_func = c_function + CaselessKeyword('override')
+    override_func = override_func.ignore(cppStyleComment)
+    return c_function, virtual_function, override_func
+
+c_function, virtual_function, override_func = functionGrammer()
+
+def classGrammer():
+    from pyparsing import Word, alphas, alphanums, CaselessKeyword, Suppress, Group, nestedExpr, Char, originalTextFor, delimitedList, Optional
+    cppName = Word(alphas+':_', alphanums+':_')
+    class_keyword = Suppress(CaselessKeyword('class'))
+    class_name =  cppName
+    class_body = Group(nestedExpr('{', '}') + Char(';'))
+    parent_class = Group(Suppress(CaselessKeyword('public')) + class_name)
+    inherits =  Suppress(Char(':')) + delimitedList(parent_class)
+    scoped_enum = Group(CaselessKeyword('enum') + class_keyword + class_name + class_body)
+    
+    Grammer = (class_keyword + class_name("name") + Optional(inherits)("parents") + (originalTextFor(class_body)("body")))
+    Grammer = Grammer.ignore(scoped_enum)
+    return Grammer
+
+cpp_class = classGrammer()
 
 def plot(weights,keyword):
+#    if keyword == 'const' or keyword == 'static':
     barWidth = 0.25
  
 # set height of bar
@@ -34,31 +73,21 @@ def plot(weights,keyword):
     r3 = [x + barWidth for x in r2]
 
 # Make the plot
-    plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
-    plt.bar(r2, weights[1], color='#557f2d', width=barWidth, edgecolor='white', label='as an argument')
-    plt.bar(r3, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
- 
+    if keyword == 'const':
+        plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
+        plt.bar(r2, weights[1], color='#557f2d', width=barWidth, edgecolor='white', label='as an argument')
+        plt.bar(r3, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
+    elif keyword == 'static':
+        plt.bar(r1, weights[0], color='#7f6d5f', width=barWidth, edgecolor='white', label='as a function')
+        plt.bar(r2, weights[2], color='#2d7f5e', width=barWidth, edgecolor='white', label='as a variable')
+#    else:
+#        plt.bar(r1, weights[0] + weights[1] + weights[2], width=barWidth, edgecolor='white', label='occurances')
 # Add xticks on the middle of the group bars
     plt.xlabel('group', fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(weights))], [keyword])
     plt.legend()
-    plt.show()
-
-def threadJob(func):
-	# Create a list of jobs and then iterate through
-	# the number of threads appending each thread to
-	# the job list
-    num_threads = multiprocessing.cpu_count()
-    jobs = []
-    for i in range(0, num_threads):
-        thread = multiprocessing.Process(target=func)
-        jobs.append(thread)
-	# Start the threads
-    for j in jobs:
-        j.start()
-	# Ensure all of the threads have finished
-    for j in jobs:
-        j.join()
+    if keyword == 'const' or keyword == 'static':
+        plt.show()
 
 def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
     Projects = []
@@ -81,28 +110,39 @@ def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cac
         print('Analysis of '+name+' previously completed. Loading results from cache.')
         with open(filename, 'rb') as file_input:
             Project = pickle.load(file_input)
-    plotProjectResults(Project)
+#    plotProjectResults(Project)
     return Project
+
 
 def plotProjectResults(project):
     result_count = []
     for result in project.getResults():
-        result_count.append(result.getCount())
+        if not (result.getKeyword() == 'const' or result.getKeyword() == 'static'):
+            result_count.append(result.getCount())
+            plt.bar(result.getKeyword(),result.getCount(),width = 0.5,label = result.getKeyword())
         result.printResult()
-    #plot(keywords, result_count)
+    plt.legend()
+    plt.xlabel('Keyword', fontweight='bold')
+    plt.show()
+    
     
 class DevProject:
     def __init__(self, directory):
         self.__directory = directory
         self.__files = self.readFiles()
         self.__results = []
+        self.classes = []
+        self.inheritances = []
+        self.abstr_base_classes = []
+        self.overrides = 0
     def __repr__(self):
         return str(self.__directory)
     def readFiles(self):
         files = []
         for filename in os.listdir(self.__directory):
-            x = File(self.__directory,filename)
-            files.append(x)
+            if filename.endswith(".h") or filename.endswith(".cpp"):
+                x = File(self.__directory,filename)
+                files.append(x)
         return files
     def getFiles(self, index = 'ALL'):
         files = []
@@ -120,8 +160,19 @@ class DevProject:
     def readFileResults(self):
         for file in self.__files:
             file.readResults()
+            if file.getName().endswith('.h'):
+                classes = cpp_class.searchString(file.getContents())
+                for item in classes:
+                    temp = cppClass(item)
+                    self.classes.append(temp)
+                    if temp.inheritance:
+                        self.inheritances.append(temp.name)
+                    if temp.abstr_base_class:
+                        self.abstr_base_classes.append(temp.name)
+                    self.overrides += temp.override
+    
     def readResults(self):
-        threadJob(self.readFileResults())
+        self.readFileResults()
         results = []
         idx = 0
         for keyword in keywords:
@@ -155,6 +206,7 @@ class File:
         except AttributeError:
             with open(filename, "r") as f:
                 file_contents = f.read()
+                file_contents = removeComments(file_contents)
         return file_contents
     def readResults(self):
         results = []
@@ -180,7 +232,9 @@ class Result:
         self.__keyword = keyword
         self.__count = count
         self.__inst = inst
-        self.__use_cases = [self.__inst.count([';']) + self.__inst.count(['{']) , self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([])]
+        self.__use_cases = [self.__inst.count([]), self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([';']) + self.__inst.count(['{'])] if self.__keyword == 'static' else [self.__inst.count([';']) + self.__inst.count(['{']) , self.__inst.count(['(']) + self.__inst.count([',']) , self.__inst.count([])]
+    def getKeyword(self):
+        return self.__keyword
     def getCount(self):
         return self.__count
     def getUseCases(self, index = 'ALL'):
@@ -195,3 +249,17 @@ class Result:
         print(string)
         print(self.__use_cases)
         plot(self.__use_cases,self.__keyword)
+        
+class cppClass:
+    def __init__(self, parseRes):
+        temp = parseRes
+        self.name = temp.name
+        self.parents = temp.parents.asList() if temp.parents else []
+        self.body = temp.body
+        self.functions = c_function.searchString(self.body).asList()
+        self.abstr_functions = virtual_function.searchString(self.body).asList()
+        self.override_functions = override_func.searchString(self.body).asList()
+        
+        self.inheritance = 1 if self.parents else 0
+        self.abstr_base_class = 1 if (len(self.functions)==len(self.abstr_functions) and len(self.functions) != 0) else 0
+        self.override = 1 if (len(self.override_functions) != 0) else 0
