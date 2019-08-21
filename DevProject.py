@@ -24,6 +24,11 @@ def makeGrammer(string):
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
 
+def makeABCGrammer(className):
+    from pyparsing import CaselessLiteral, Char, Combine
+    grammer = (CaselessLiteral('unique_ptr<'+className+'>')|CaselessLiteral('shared_ptr<'+className+'>')|Combine(CaselessLiteral(className)+(Char('*')|Char('&'))))
+    return grammer
+
 def functionGrammer():
     from pyparsing import (oneOf, Word, alphas, alphanums, Combine, Optional, Group, nestedExpr, Suppress, quotedString, cppStyleComment, delimitedList, CaselessKeyword, Char)
     data_type = oneOf("void int short long char float double")
@@ -132,6 +137,7 @@ class DevProject:
         self.classes = []
         self.inheritances = []
         self.abstr_base_classes = []
+        self.abc_used = []
         self.overrides = 0
     def __repr__(self):
         return str(self.__directory)
@@ -167,8 +173,9 @@ class DevProject:
                         self.inheritances.append(temp.name)
                     if temp.abstr_base_class:
                         self.abstr_base_classes.append(temp.name)
+                        grammer = makeABCGrammer(temp.name)
+                        self.abc_used.append(grammer.searchString(self.getFileContents()).asList())
                     self.overrides += temp.override
-    
     def readResults(self):
         self.readFileResults()
         results = []
