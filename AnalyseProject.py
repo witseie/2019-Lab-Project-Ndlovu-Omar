@@ -12,7 +12,7 @@ def AnalyseProject(name, repoDirectory = os.getcwd()+os.sep+r'Repositories', cac
         os.makedirs(cacheDirectory)
     filename =  cacheDirectory+os.sep+name+'.pkl'
     if not os.path.exists(filename):
-        Project = DevProject(repoDirectory+os.sep+name+os.sep+'game-source-code')
+        Project = DevProject.DevProject(repoDirectory+os.sep+name+os.sep+'game-source-code')
         print('Analysing ' + name)
         Project.readResults()
         print('Done')
