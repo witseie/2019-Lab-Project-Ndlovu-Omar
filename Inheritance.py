@@ -6,35 +6,8 @@ This is a temporary script file.
 """
 import AnalyseProject
 
-projects = AnalyseProject.AnalyseAllProjects()
-res = AnalyseProject.ProjectResults()
-for project in projects:
-    #Inheritance
-    res.classes += project.classes
-    if project.public_inheritance:
-        res.public_inheritance += 1
-    if project.abstr_base_classes:
-        res.abstr_base_classes += 1
-        if not project.override:
-            res.override += 1#This is the number of projects that did NOT use override
-        if project.abc_used:
-            res.abc_used += 1
-    #Keywords
-    if project.const:
-        res.const += 1
-    if project.static:
-        res.static += 1
-    if project.enum:
-        res.enum += 1
-    if project.enum_class:
-        res.enum_class += 1
-    if project.vector:
-        res.vector += 1
-    #No use cases for all projects
-res.classes = res.classes//len(projects)
-for project in projects:
-    if project.classes < res.classes:#Number of projects with below average number of classes
-        res.const_args += 1 #Just using an unsused variable instead of creating a dedicated one
+res = AnalyseProject.AnalyseAllProjects()
+
 print('\nResults for all projects:\n')
 print('Number of projects that used constant functions, variables or arguments: ' + str(res.const))
 print('Number of projects that used static functions or variables: ' + str(res.static))
