@@ -5,7 +5,6 @@ Created on Sun Aug 18 22:28:29 2019
 @author: user
 """
 
-
 import numpy as np
 import pandas as pd
 import tkinter as tk
@@ -22,8 +21,9 @@ from tkinter import ttk
 
 import os
 import CloneAllProjects
-import DevProject
-import plot
+import project_example
+import AnalyseProject
+
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -31,18 +31,28 @@ LARGE_FONT= ("Verdana", 12)
 x = []
 y = []
 z = []
-    
-
- 
+     
 def selected(lbox):
+    global x,y,z
     all_items = lbox.get(0,tk.END)
     sel_idx= lbox.curselection()
     sel_list = [all_items[item] for item in sel_idx]
     sel_item = lbox.get(tk.ANCHOR)
-    a = DevProject.AnalyseProject(sel_item)
-    b=a.getResults()
-    c=b[1].getUseCases()
-    print(c) 
+    res = project_example.setName(sel_item)
+    x.append(res.const_funcs)
+    x.append(res.static_funcs)
+    y.append(res.const_args)
+    y.append(0)
+    z.append(res.const_vars)
+    z.append(res.static_vars)
+    return x,y,z
+    
+
+
+  
+def clear(canvas):
+    canvas.get_tk_widget().destroy()
+    
 
 class ProjectAnalyser(tk.Tk):
 
@@ -64,7 +74,7 @@ class ProjectAnalyser(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         
     
-
+        
         self.frames = {}
 
         for F in (StartPage,PageOne):
@@ -96,12 +106,8 @@ class StartPage(tk.Frame):
         for item in flist:
             lbox.insert(tk.END, item)
             
-        x = DevProject.x
-        y = DevProject.y
-        z = DevProject.z
-        
-           
-        button = ttk.Button(self, text="Analyse",command =lambda:(selected(lbox),
+              
+        button = ttk.Button(self, text="Analyse",command=lambda:(selected(lbox),
         controller.show_frame(PageOne)))
 
         button.place(relx=0.533, rely=0.911, height=32, width=68)
@@ -165,14 +171,18 @@ class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        x = DevProject.x
-        y = DevProject.y
-        z = DevProject.z
+        
+    
+        
 ##        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
 #        label.pack(pady=10,padx=10)
         button1 = ttk.Button(self, text="Keyword Results",
                             command=lambda: self.plot(x,y,z))
-        button1.pack()
+        
+        button2 = ttk.Button(self, text="Inheritance Results",
+                            command=lambda: self.plot3())
+        button1.pack(side="left")
+        button2.pack(side="left")
         
        
     def plot(self,x,y,z):
@@ -188,17 +198,17 @@ class PageOne(tk.Frame):
 #        bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
         df.plot(kind='bar', legend=True, ax=ax1)
         ax1.set_title('Keywords Vs. Extent of use')
-
+        
         canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         
         button2 = ttk.Button(self, text="Inheritance Results",
-                            command=lambda:self.plot2(canvas))
+                            command=lambda:(clear(canvas),self.plot2() ))
         button2.pack()
         
-    def plot2(self,canvas):
-        canvas.get_tk_widget().destroy()
+    def plot2(self):
+     
         
         f = Figure(figsize=(5,5), dpi=100)
         a = f.add_subplot(111)
@@ -208,6 +218,17 @@ class PageOne(tk.Frame):
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         
+        
+    def plot3(self):
+    
+        
+        f = Figure(figsize=(5,5), dpi=100)
+        a = f.add_subplot(111)
+        a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+        
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
 app = ProjectAnalyser()
 app.mainloop()
