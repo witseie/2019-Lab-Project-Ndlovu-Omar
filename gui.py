@@ -7,14 +7,15 @@ Created on Sun Aug 18 22:28:29 2019
 
 import numpy as np
 import pandas as pd
-import tkinter as tk
-import matplotlib.pyplot as plt
 from pandas import DataFrame
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
 from matplotlib.figure import Figure
+
+import threading
 
 import tkinter as tk
 from tkinter import ttk
@@ -25,9 +26,7 @@ import project_example
 import AnalyseProject
 
 
-
 LARGE_FONT= ("Verdana", 12)
-
 
 obj = AnalyseProject.ProjectResults
      
@@ -45,12 +44,10 @@ def allprojects():
     res = AnalyseProject.AnalyseAllProjects()
     return res
     
-
 def clear(canvas):
     canvas.get_tk_widget().destroy()
     
     
-
 class ProjectAnalyser(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -103,14 +100,15 @@ class StartPage(tk.Frame):
             lbox.insert(tk.END, item)
             
               
-        button = ttk.Button(self, text="Analyse",command=lambda:(selected(lbox),
-        controller.show_frame(PageOne)))
+        button = ttk.Button(self, text="Analyse",
+                            command=lambda:(threading.Thread(target=selected,args=(lbox,)).start(),controller.show_frame(PageOne)))
 
         button.place(relx=0.533, rely=0.911, height=32, width=68)
   
         #button.pack(rex=0.533, rely=0.911, height=32, width=68) command=lambda:controller.show_frame(PageOne))
         
-        button2 = ttk.Button(self, text="Analyse All",command=lambda:(allprojects(),controller.show_frame(PageTwo)))
+        button2 = ttk.Button(self, text="Analyse All",
+                             command=lambda:(threading.Thread(target=allprojects).start(),controller.show_frame(PageTwo)))
         button2.place(relx=0.8, rely=0.911, height=32, width=98)
         
         Label1 = tk.Label(self)
