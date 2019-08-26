@@ -50,9 +50,16 @@ def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
             res.enum += 1
         if project.enum_class:
             res.enum_class += 1
+        #Use cases
         if project.vector:
             res.vector += 1
-        #No use cases for all projects
+        if project.map:
+            res.map += 1
+        if project.auto:
+            res.auto += 1
+        if project.shared or project.unique:
+            res.pointers += 1
+            
     res.classes = res.classes//len(projects)
     for project in projects:
         if project.classes < res.classes:#Number of projects with below average number of classes
@@ -83,8 +90,16 @@ def GetAnalysisResults(project):
             res.enum = result.getCount()
         elif keyword == 'enum class':
             res.enum_class = result.getCount()
-        elif keyword == 'vector':
-            res.vector = result.getCount()
+        elif keyword == 'STL':
+            res.stl = result.getCount()
+            res.vector = result.getUseCases(0)
+            res.map = result.getUseCases(1)
+            res.auto = result.getUseCases(2)#Although auto does not necessarily belong to STL it is bundled here for convenience sake.
+        elif keyword == 'pointers':
+            res.pointers = result.getCount()
+            res.shared = result.getUseCases(0)
+            res.unique = result.getUseCases(1)
+            res.raw = result.getUseCases(2)
     return res
 
 class ProjectResults:#For each C++ feature outlined in the project spec and proj plan
@@ -100,10 +115,21 @@ class ProjectResults:#For each C++ feature outlined in the project spec and proj
         self.static = 0
         self.enum = 0
         self.enum_class = 0
-        self.vector = 0
+        self.stl = 0
+        self.pointers = 0
         #keyword use cases
+        #const
         self.const_funcs = 0
         self.const_vars = 0
         self.const_args = 0
+        #static
         self.static_funcs = 0
         self.static_vars = 0
+        #STL
+        self.vector = 0
+        self.map = 0
+        self.auto = 0
+        #pointers
+        self.shared = 0
+        self.unique = 0
+        self.raw = 0

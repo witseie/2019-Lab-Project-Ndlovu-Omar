@@ -5,18 +5,18 @@ Created on Thu Aug  1 08:13:01 2019
 @author: Ashraf
 """
 import os
-keywords = ['const','static','class','enum', 'enum class','vector']
+keywords = ['const','static','enum', 'enum class','vector', 'pointers']
 
 def removeComments(string):
     from pyparsing import nestedExpr, dblSlashComment, Suppress
     return (Suppress(nestedExpr('/*','*/') | dblSlashComment)).transformString(string)
 
 def makeGrammer(string):
-    from pyparsing import alphanums, Suppress, Optional, CaselessKeyword, Char, Word, cppStyleComment
-    cppName = alphanums + ':_<'
+    from pyparsing import alphas, alphanums, Suppress, Optional, CaselessKeyword, Char, Word, cppStyleComment
+    cppName = Word(alphas+'_<', alphanums+':_<>,') + ~Word('\n')
     constKeyword = Suppress(Optional(CaselessKeyword("const")))
     keyword = Optional(Char(',')) + constKeyword + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + constKeyword + Suppress(CaselessKeyword(string)) if not string == 'const' else Optional(Char(',')) + Suppress(CaselessKeyword(string)) | Optional(Char('(')) + Suppress(CaselessKeyword(string))
-    name =  Word(cppName) + Char(':') + CaselessKeyword('public') | Word(cppName) + Char('{') + CaselessKeyword('public') if string == 'class' else Word(cppName) + Optional(Word(cppName))
+    name = cppName + Optional(cppName)
     Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name) + Optional(Char(';')) if string == 'static' else keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)
     Grammer = Grammer.ignore(cppStyleComment)
     return Grammer
@@ -55,18 +55,26 @@ def classGrammer():
     class_body = Group(nestedExpr('{', '}') + Char(';'))
     parent_class = Group(Suppress(CaselessKeyword('public')) + class_name)
     inherits =  Suppress(Char(':')) + delimitedList(parent_class)
-    scoped_enum = Group(CaselessKeyword('enum') + class_keyword + class_name + class_body)
-    
+    scoped_enum = Suppress(CaselessKeyword('enum') + class_keyword + class_name + class_body)
     Grammer = (class_keyword + class_name("name") + Optional(inherits)("parents") + (originalTextFor(class_body)("body")))
     Grammer = Grammer.ignore(scoped_enum)
     return Grammer
 
 cpp_class = classGrammer()
 
+def STLGrammer(): 
+    from pyparsing import alphas, alphanums, CaselessLiteral, CaselessKeyword, Char, Word, Suppress, FollowedBy, Optional
+    cppName = Suppress(Word(alphas+'_<', alphanums+':_<>,') + ~Word('\n'))
+    ptr_grammer = CaselessLiteral('unique_ptr')| CaselessLiteral('shared_ptr') | CaselessLiteral('make_shared') | CaselessLiteral('make_unique') | cppName + Char('*') + cppName| cppName + Char('&') + cppName
+    vec_grammer = CaselessLiteral('vector') + FollowedBy(Char('<')) | CaselessLiteral('vector') + FollowedBy(Char('<') + Optional('std::') + CaselessLiteral('vector')) | CaselessLiteral('map') + FollowedBy(Char('<')) | CaselessKeyword('auto')
+    return ptr_grammer, vec_grammer
+
+ptr_grammer, vec_grammer = STLGrammer()
+
 class DevProject:
     def __init__(self, directory):
         self.__directory = directory
-        self.__files = self.readFiles()
+        self.__files, self.__header_files = self.readFiles()
         self.__results = []
         self.classes = []
         self.inheritances = []#public inheritance
@@ -77,11 +85,14 @@ class DevProject:
         return str(self.__directory)
     def readFiles(self):
         files = []
+        h_files = []
         for filename in os.listdir(self.__directory):
             if filename.endswith(".h") or filename.endswith(".cpp"):
                 x = File(self.__directory,filename)
                 files.append(x)
-        return files
+                if filename.endswith(".h"):
+                    h_files.append(x)
+        return files, h_files
     def getFiles(self, index = 'ALL'):
         files = []
         if len(self.__files):
@@ -89,43 +100,56 @@ class DevProject:
         return files
     def getFileContents(self, index = 'ALL'):
         if index == 'ALL':
-            contents = []
+            contents = ''
             for cont in self.__files:
-                contents.append(cont.getContents())
+                contents+=(cont.getContents())
         else:
             contents = self.__files[index].getContents()
         return contents
+    def getHeaderContents(self):
+        contents = ''
+        for cont in self.__header_files:
+            contents += cont.getContents()
+        return contents
     def readFileResults(self):
-        for file in self.__files:
-            file.readResults()
-            if file.getName().endswith('.h'):
-                classes = cpp_class.searchString(file.getContents())
-                for item in classes:
-                    temp = cppClass(item)
-                    self.classes.append(temp)
-                    if temp.inheritance:
-                        self.inheritances.append(temp.name)
-                    if temp.abstr_base_class:
-                        self.abstr_base_classes.append(temp.name)
-                        grammer = makeABCGrammer(temp.name)
-                        self.abc_used.append(grammer.searchString(self.getFileContents()).asList())
-                    self.overrides += temp.override
+        classes = cpp_class.searchString(self.getHeaderContents())
+        for item in classes:
+            temp = cppClass(item)
+            self.classes.append(temp)
+            if temp.inheritance:
+                self.inheritances.append(temp.name)
+            if temp.abstr_base_class:
+                self.abstr_base_classes.append(temp.name)
+                grammer = makeABCGrammer(temp.name)
+                self.abc_used.append(grammer.searchString(self.getFileContents()).asList())
+            self.overrides += temp.override
     def readResults(self):
         self.readFileResults()
         results = []
-        idx = 0
         for keyword in keywords:
-            count = 0
-            use_cases = [0, 0, 0]
-            for file in self.__files:
-                count += file.getResults(idx).getCount()
-                use_cases[0] +=file.getResults(idx).getUseCases(0)#func
-                use_cases[1] +=file.getResults(idx).getUseCases(1)#arg
-                use_cases[2] +=file.getResults(idx).getUseCases(2)#var
-            res = Result(keyword,count)
-            res.setUseCases(use_cases)
-            results.append(res)
-            idx+=1
+            if keyword == 'vector':
+                inst = vec_grammer.searchString(self.getFileContents()).asList()
+                count = inst.count(['vector']) + inst.count(['map'])
+                use_cases = [inst.count(['vector']), inst.count(['map']), inst.count(['auto'])]
+                res = Result('STL',count)
+                res.setUseCases(use_cases)
+                results.append(res)
+            elif keyword == 'pointers':
+                inst = ptr_grammer.searchString(self.getFileContents()).asList()
+                count = len(inst)
+                shared_ptr =  inst.count(['shared_ptr']) + inst.count(['make_shared'])
+                unique_ptr = inst.count(['unique_ptr']) + inst.count(['make_unique'])
+                raw_ptr = inst.count(['*']) + inst.count(['&'])
+                use_cases = [shared_ptr, unique_ptr, raw_ptr]
+                res = Result('pointers', count, inst)
+                res.setUseCases(use_cases)
+                results.append(res)
+            else:
+                grammer = makeGrammer(keyword)
+                inst = grammer.searchString(self.getFileContents())
+                count = len(inst)
+                res = Result(keyword,count,inst.asList())
+                results.append(res)
         self.__results = results
     def getResults(self):
         return self.__results
@@ -187,7 +211,6 @@ class Result:
         string = 'Instances of use of ' + self.__keyword + ' keyword: ' + str(self.__count)
         print(string)
         print(self.__use_cases)
-#        plot(self.__use_cases,self.__keyword)
 
 class cppClass:
     def __init__(self, parseRes):
