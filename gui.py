@@ -19,6 +19,7 @@ import threading
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import *
 
 import os
 import CloneAllProjects
@@ -29,8 +30,9 @@ import AnalyseProject
 LARGE_FONT= ("Verdana", 12)
 
 obj = AnalyseProject.ProjectResults
+x = []
      
-def selected(lbox):
+def selected(lbox,controller):
     global x,y,z,obj
     all_items = lbox.get(0,tk.END)
     sel_idx= lbox.curselection()
@@ -38,16 +40,22 @@ def selected(lbox):
     sel_item = lbox.get(tk.ANCHOR)
     res = project_example.setName(sel_item)
     obj = res
+    controller.show_frame(PageOne)
     return obj
 
-def allprojects():
+def allprojects(controller):
     res = AnalyseProject.AnalyseAllProjects()
+    controller.show_frame(PageTwo)
     return res
     
 def clear(canvas):
-    canvas.get_tk_widget().destroy()
+        canvas.get_tk_widget().clear()
     
-    
+def widget(self,figure1):   
+    canvas = FigureCanvasTkAgg(figure1, self)
+    return canvas
+
+  
 class ProjectAnalyser(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -67,11 +75,9 @@ class ProjectAnalyser(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         
-    
-        
         self.frames = {}
 
-        for F in (StartPage,PageOne,PageTwo):
+        for F in (StartPage,PageOne,PageTwo,PageThree):
 
             frame = F(container, self)
 
@@ -90,26 +96,29 @@ class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
-#        label = tk.Label(self, text="Home", font=LARGE_FONT)
-#        label.place(relx=0.0, rely=0.044, height=22, width=59)
+
         flist = os.listdir(os.getcwd()+os.sep+r'Repositories')
         lbox = tk.Listbox(self)
         lbox.place(relx=0.533, rely=0.044, relheight=0.858, relwidth=0.44)
         
         for item in flist:
             lbox.insert(tk.END, item)
-            
-              
+                         
         button = ttk.Button(self, text="Analyse",
-                            command=lambda:(threading.Thread(target=selected,args=(lbox,)).start(),controller.show_frame(PageOne)))
+                            command=lambda:(threading.Thread(target=selected,args=(lbox,controller,)).start()))
 
         button.place(relx=0.533, rely=0.911, height=32, width=68)
   
         #button.pack(rex=0.533, rely=0.911, height=32, width=68) command=lambda:controller.show_frame(PageOne))
         
         button2 = ttk.Button(self, text="Analyse All",
-                             command=lambda:(threading.Thread(target=allprojects).start(),controller.show_frame(PageTwo)))
+                             command=lambda:(threading.Thread(target=allprojects,args=(controller,)).start()))
         button2.place(relx=0.8, rely=0.911, height=32, width=98)
+        
+        TProgressbar1 = ttk.Progressbar(self)
+        TProgressbar1.place(relx=0.1, rely=0.422, relwidth=0.417
+                , relheight=0.0, height=22)
+        TProgressbar1.configure(length="250")
         
         Label1 = tk.Label(self)
         Label1.place(relx=0.0, rely=0.044, height=31, width=59)
@@ -159,35 +168,42 @@ class StartPage(tk.Frame):
 #        self.Entry3.configure(foreground="#000000")
 #        self.Entry3.configure(insertbackground="black")
         Entry3.configure(width=214)
-
-                       
+                     
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-            
-##        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
-#        label.pack(pady=10,padx=10)
-        button1 = ttk.Button(self, text="Keyword Results",
-                            command=lambda: self.plot())
-        
-        button2 = ttk.Button(self, text="Inheritance Results",
-                            command=lambda: self.plot2())
-        button1.pack(side="left")
-        button2.pack(side="left")
-        
+        self.frame = tk.Frame.__init__(self, parent)
        
-    def plot(self):
-           
+        figure1 = plt.Figure(figsize=(5,5), dpi=100)
+        canvas = FigureCanvasTkAgg(figure1, self)
+        
+        tabControl = ttk.Notebook(self)
+        tab1 = ttk.Frame(tabControl)
+        tabControl.add(tab1,text="Keywords Results")
+        tab2 = ttk.Frame(tabControl)
+        tabControl.add(tab2,text="Inheritance Results")
+    
+        tabControl.pack(expan = 1,fill = "both")
+        
+        button1 = ttk.Button(tab1, text="Keyword Results",
+                            command=lambda: (self.plot(canvas,figure1)))
+        button2 = ttk.Button(self, text="Next",
+                            command=lambda:(controller.show_frame(PageTwo)))
+        
+        button1.pack(side="left")
+        button2.pack(side ="left")
+
+    def plot(self,canvas,figure1):
+       
+        canvas.get_tk_widget().destroy()
         groups = [[obj.const_funcs,obj.const_args,obj.const_args],[obj.static_funcs,obj.static_vars,0]]
         group_labels = ['const', 'static']
-
+        
         df = pd.DataFrame(groups, index=group_labels).T
-#
+        
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
-#        bar1 = FigureCanvasTkAgg(figure1)
-#        bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
         df.plot(kind='bar', legend=True, ax=ax1)
         ax1.set_title('Keywords Vs. Extent of use')
         
@@ -195,46 +211,87 @@ class PageOne(tk.Frame):
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         
-        button2 = ttk.Button(self, text="Inheritance Results",
-                            command=lambda:(clear(canvas),self.plot2(a) ))
-        button2.pack()
+       
+class PageTwo(tk.Frame):
+    def __init__(self, parent, controller):
+        self.frame = tk.Frame.__init__(self, parent)
+       
+        figure1 = plt.Figure(figsize=(5,5), dpi=100)
+        canvas = FigureCanvasTkAgg(figure1, self)
         
-    def plot2(self):
+        tabControl = ttk.Notebook(self)
+        tab1 = ttk.Frame(tabControl)
+        tabControl.add(tab1,text="Keywords Results")
+        tab2 = ttk.Frame(tabControl)
+        tabControl.add(tab2,text="Inheritance Results")
+    
+        tabControl.pack(expan = 1,fill = "both")
+               
+        button1 = ttk.Button(self, text="Inheritance Results",
+                            command=lambda:(self.plot2(canvas,figure1)))
+        
+        button2 = ttk.Button(self, text="Next",
+                            command=lambda:(controller.show_frame(PageThree)))
+        
+        button1.pack(side ="left")
+        button2.pack(side ="left")
+               
+    def plot2(self,canvas,figure1):
+       
         df = pd.DataFrame({'lab':['Classes Present', 'Public Inheritance', 'ABC','Times ABC used'], 'val':[obj.classes, obj.public_inheritance, obj.abstr_base_classes,obj.abc_used]})
-        #df = pd.DataFrame({'lab':['Classes', 'Public Inheritance', 'Abstract Base Classes','Times ABC used','Classes using Override'],'val':[10,20})
+        
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
-        df.plot.bar(x='lab', y='val', rot=0, ax=ax1)
-        
+        df.plot.bar(x='lab', y='val', rot=0, ax=ax1)   
         canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         
+class PageThree(tk.Frame):
+    def __init__(self, parent, controller):
+        self.frame = tk.Frame.__init__(self, parent)
+       
+        figure1 = plt.Figure(figsize=(5,5), dpi=100)
+        canvas = FigureCanvasTkAgg(figure1, self)
         
-    def plot3(self):
+        tabControl = ttk.Notebook(self)
+        tab1 = ttk.Frame(tabControl)
+        tabControl.add(tab1,text="Enum & Pointer Results")
+       
+        tabControl.pack(expan = 1,fill = "both")
+#               
+        button2 = ttk.Button(self, text="Enum & Pointers",
+                            command=lambda:(self.plot3(canvas,figure1)))
+        button2.place(relx=0.15, rely=0.044,height=26, relwidth=0.357)
         
-        f = Figure(figsize=(5,5), dpi=100)
-        a = f.add_subplot(111)
-        a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+    def plot3(self,canvas,figure1):
+       
         
-        canvas = FigureCanvasTkAgg(f, self)
+        figure1,axes = plt.subplots(nrows=1, ncols=2,figsize=(15,5))
+        df = pd.DataFrame({'Features':['Enumerations', 'Scoped Enumerations', 
+                                       'Unique Pointer','Shared Pointer','Raw Pointer'], 
+    'usage value':[(obj.enum - obj.enum_class), obj.enum_class, obj.unique,obj.shared,obj.raw]})
+        
+        #figure1 = plt.Figure(figsize=(5,5), dpi=100)
+        #ax1 = figure1.add_subplot(211)
+        df.plot.bar(x='Features', y='usage value', rot=0, ax=axes[0])   
+#        canvas = FigureCanvasTkAgg(figure1, self)
+#        canvas.draw()
+#        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        raw =  {'index': ['Unique Pointers', 'Shared Pointers', 'Raw Pointers'],
+                'Pointer Usage': [obj.unique,obj.shared ,obj.raw]}
+#        df1 = pd.DataFrame({'Pointer Usage': [obj.unique,obj.shared ,obj.raw]},
+#                  index=['Unique Pointers', 'Shared Pointers', 'Raw Pointers'])
+        df1 = pd.DataFrame(raw, columns= ['index','Pointer Usage'])
+#                  index=['Unique Pointers', 'Shared Pointers', 'Raw Pointers'])
+        #figure2 = plt.Figure(figsize=(5,5), dpi=100)
+        #ax2 = figure2.add_subplot(111)
+        plt.title('Pointer Usage Summary')
+        plt.pie(df1['Pointer Usage'],labels=df1['index'],autopct='%1.1f%%',explode=[0,0.1,0])
+        #df1.plot.pie(ax = axes[1],subplots=True,autopct ='%1.0%%f')
+        canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        
-class PageTwo(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-              
-##        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
-#        label.pack(pady=10,padx=10)
-        button1 = ttk.Button(self, text="Keyword Results",
-                            command=lambda: self.plot(x,y,z))
-        
-        button2 = ttk.Button(self, text="Inheritance Results",
-                            command=lambda: self.plot3())
-        button1.pack(side="left")
-        button2.pack(side="left")
-
+       
 app = ProjectAnalyser()
 app.mainloop()
