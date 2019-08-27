@@ -4,7 +4,6 @@ Created on Sun Aug 18 22:28:29 2019
 
 @author: user
 """
-
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
@@ -51,10 +50,6 @@ def allprojects(controller):
 def clear(canvas):
         canvas.get_tk_widget().clear()
     
-def widget(self,figure1):   
-    canvas = FigureCanvasTkAgg(figure1, self)
-    return canvas
-
   
 class ProjectAnalyser(tk.Tk):
 
@@ -180,38 +175,50 @@ class PageOne(tk.Frame):
         tabControl = ttk.Notebook(self)
         tab1 = ttk.Frame(tabControl)
         tabControl.add(tab1,text="Keywords Results")
-        tab2 = ttk.Frame(tabControl)
-        tabControl.add(tab2,text="Inheritance Results")
     
         tabControl.pack(expan = 1,fill = "both")
         
-        button1 = ttk.Button(tab1, text="Keyword Results",
+        button1 = ttk.Button(self, text="View Keyword Results",
                             command=lambda: (self.plot(canvas,figure1)))
         button2 = ttk.Button(self, text="Next",
                             command=lambda:(controller.show_frame(PageTwo)))
+        button3 = ttk.Button(self, text="Back to Home",
+                            command=lambda:(controller.show_frame(StartPage)))
         
-        button1.pack(side="left")
-        button2.pack(side ="left")
+        button1.place(relx=0.28, rely=0.049,height=26, width=96)
+        button2.place(relx=0.20, rely=0.049,height=26, width=68)
+        button3.place(relx=0.10, rely=0.049,height=26, width=87)
+        
+#        button1.pack(side="left")
+#        button2.pack(side ="left")
 
     def plot(self,canvas,figure1):
-       
-        canvas.get_tk_widget().destroy()
-        groups = [[obj.const_funcs,obj.const_args,obj.const_args],[obj.static_funcs,obj.static_vars,0]]
-        group_labels = ['const', 'static']
+        Label1 = tk.Label(self)
+        Label1.place(relx=0.55, rely=0.050, height=55, width=500)
+#        Label1.configure(background="#d9d9d9")
+#        Label1.configure(disabledforeground="#a3a3a3")
+#        Label1.configure(foreground="#000000")
+        Label1.configure(text='''Number of constant functions, variables or arguments : ''' + str(obj.const)+ '''\n'''+
+                         str(obj.const_funcs) + ''' functions,''' + str(obj.const_vars) + ''' variables and ''' + str(obj.const_args) + ''' arguments. \n'''
+                         '''Number of static functions or variables: ''' + str(obj.static) + '''\n'''+
+                         str(obj.static_funcs) + ''' functions and ''' + str(obj.static_vars) + ''' variables.''')
         
-        df = pd.DataFrame(groups, index=group_labels).T
-        
+        const = [obj.const_funcs, obj.const_args, obj.const_args]
+        static = [obj.static_funcs,obj.static_vars,0]
+        index = ['as a function', 'as a variable', 'as an argument']
+        df = pd.DataFrame({'const': const,
+                    'static': static}, index=index)
+
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
 
-        df.plot(kind='bar', legend=True, ax=ax1)
+        df.plot(kind='bar', legend=True, ax=ax1, rot =0)
         ax1.set_title('Keywords Vs. Extent of use')
         
         canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        
-       
+            
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
         self.frame = tk.Frame.__init__(self, parent)
@@ -220,11 +227,8 @@ class PageTwo(tk.Frame):
         canvas = FigureCanvasTkAgg(figure1, self)
         
         tabControl = ttk.Notebook(self)
-        tab1 = ttk.Frame(tabControl)
-        tabControl.add(tab1,text="Keywords Results")
         tab2 = ttk.Frame(tabControl)
         tabControl.add(tab2,text="Inheritance Results")
-    
         tabControl.pack(expan = 1,fill = "both")
                
         button1 = ttk.Button(self, text="Inheritance Results",
@@ -233,12 +237,27 @@ class PageTwo(tk.Frame):
         button2 = ttk.Button(self, text="Next",
                             command=lambda:(controller.show_frame(PageThree)))
         
-        button1.pack(side ="left")
-        button2.pack(side ="left")
+        button3 = ttk.Button(self, text="Previous",
+                            command=lambda:(controller.show_frame(PageOne)))
+        
+        button1.place(relx=0.28, rely=0.049,height=26, width=115)
+        button2.place(relx=0.20, rely=0.049,height=26, width=68)
+        button3.place(relx=0.10, rely=0.049,height=26, width=68)
                
     def plot2(self,canvas,figure1):
+        Label1 = tk.Label(self)
+        Label1.place(relx=0.45, rely=0.047, height=55, width=500)
+#        Label1.configure(background="#d9d9d9")
+#        Label1.configure(disabledforeground="#a3a3a3")
+#        Label1.configure(foreground="#000000")
+        Label1.configure(text='''Number of classes in the project: ''' + str(obj.classes)+ '''\n'''+
+                         '''Number of classes using public inheritance:''' + str(obj.public_inheritance)+ ''' \n'''+
+                         '''Number of abstract base classes: ''' + str(obj.abstr_base_classes) + '''    &   '''+
+                         '''Number of times ABC was used in code: ''' + str(obj.abc_used)+ '''\n'''
+                         '''Number of classes using override functions: ''' + str(obj.override))
        
-        df = pd.DataFrame({'lab':['Classes Present', 'Public Inheritance', 'ABC','Times ABC used'], 'val':[obj.classes, obj.public_inheritance, obj.abstr_base_classes,obj.abc_used]})
+        df = pd.DataFrame({'lab':['Classes Present', 'Public Inheritance', 'ABC','Times ABC used', 'Ovveride'], 
+                           'val':[obj.classes, obj.public_inheritance, obj.abstr_base_classes,obj.abc_used,obj.override]})
         
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
@@ -260,15 +279,33 @@ class PageThree(tk.Frame):
        
         tabControl.pack(expan = 1,fill = "both")
 #               
-        button2 = ttk.Button(self, text="Enum & Pointers",
+        button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot3(canvas,figure1)))
-        button2.place(relx=0.15, rely=0.044,height=26, relwidth=0.357)
+        button2 = ttk.Button(self, text="Back to Home",
+                            command=lambda:(controller.show_frame(StartPage)))
+        button3 = ttk.Button(self, text="Previous",
+                            command=lambda:(controller.show_frame(PageOne)))
+        
+        button1.place(relx=0.28, rely=0.049,height=26, width=68)
+        button2.place(relx=0.20, rely=0.049,height=26, width=68)
+        button3.place(relx=0.10, rely=0.049,height=26, width=68)
+      
         
     def plot3(self,canvas,figure1):
+        Label1 = tk.Label(self)
+        Label1.place(relx=0.45, rely=0.047, height=95, width=500)
+
+        Label1.configure(text='''Number of enumerations: ''' + str(obj.enum)+ ''' & '''+
+                         '''Number of scoped enumerations:''' + str(obj.enum_class)+ ''' \n'''+
+                         '''Number of STL vectors or maps: ''' + str(obj.stl) + ''' \n'''+  str(obj.vector) + ''' vectors and ''' + str(obj.map) + ''' maps. \n'''
+                         '''Number of times "auto" keyword was used in the code: ''' + str(obj.auto)+ '''\n'''
+                         '''Number of times pointers were used: ''' + str(obj.pointers) + '''\n'''+ str(obj.unique) +
+                         '''  unique smart pointers ''' + str(obj.shared) + '''  shared pointers and ''' + str(obj.raw) +  '''  raw pointers( "*" or "&")''')
+ 
        
         
         figure1,axes = plt.subplots(nrows=1, ncols=2,figsize=(15,5))
-        df = pd.DataFrame({'Features':['Enumerations', 'Scoped Enumerations', 
+        df = pd.DataFrame({'Features':['Enumerations', 'Scoped'+'\n'+ 'Enumerations', 
                                        'Unique Pointer','Shared Pointer','Raw Pointer'], 
     'usage value':[(obj.enum - obj.enum_class), obj.enum_class, obj.unique,obj.shared,obj.raw]})
         
