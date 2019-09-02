@@ -59,7 +59,12 @@ def AnalyseAllProjects(repoDirectory = os.getcwd()+os.sep+r'Repositories'):
             res.auto += 1
         if project.shared or project.unique:
             res.pointers += 1
-            
+        if project.shared:
+            res.shared += 1
+        if project.unique:
+            res.unique += 1
+        if project.raw and not (project.shared or project.unique):
+            res.raw += 1#This is the number of projects that used ONLY raw pointers
     res.classes = res.classes//len(projects)
     for project in projects:
         if project.classes < res.classes:#Number of projects with below average number of classes

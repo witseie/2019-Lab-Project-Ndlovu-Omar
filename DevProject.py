@@ -64,8 +64,8 @@ cpp_class = classGrammer()
 
 def STLGrammer(): 
     from pyparsing import alphas, alphanums, CaselessLiteral, CaselessKeyword, Char, Word, Suppress, FollowedBy, Optional
-    cppName = Suppress(Word(alphas+'_<', alphanums+':_<>,') + ~Word('\n'))
-    ptr_grammer = CaselessLiteral('unique_ptr')| CaselessLiteral('shared_ptr') | CaselessLiteral('make_shared') | CaselessLiteral('make_unique') | cppName + Char('*') + cppName| cppName + Char('&') + cppName
+    cppName = Suppress(Word(alphas+'_', alphanums+':_,') + ~Word('\n'))
+    ptr_grammer = CaselessLiteral('unique_ptr')| CaselessLiteral('shared_ptr') | CaselessLiteral('make_shared') | CaselessLiteral('make_unique') | cppName + ~Char('>') + Char('*') + cppName| cppName + ~Char('>') + Char('&') + cppName
     vec_grammer = CaselessLiteral('vector') + FollowedBy(Char('<')) | CaselessLiteral('vector') + FollowedBy(Char('<') + Optional('std::') + CaselessLiteral('vector')) | CaselessLiteral('map') + FollowedBy(Char('<')) | CaselessKeyword('auto')
     return ptr_grammer, vec_grammer
 
