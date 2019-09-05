@@ -45,7 +45,7 @@ def functionGrammer():
     override_func = override_func.ignore(cppStyleComment)
     return c_function, virtual_function, override_func
 
-c_function, virtual_function, override_func = functionGrammer()
+
 
 def classGrammer():
     from pyparsing import Word, alphas, alphanums, CaselessKeyword, Suppress, Group, nestedExpr, Char, originalTextFor, delimitedList, Optional
@@ -60,7 +60,7 @@ def classGrammer():
     Grammer = Grammer.ignore(scoped_enum)
     return Grammer
 
-cpp_class = classGrammer()
+
 
 def STLGrammer(): 
     from pyparsing import alphas, alphanums, CaselessLiteral, CaselessKeyword, Char, Word, Suppress, FollowedBy, Optional
@@ -112,6 +112,7 @@ class DevProject:
             contents += cont.getContents()
         return contents
     def readFileResults(self):
+        cpp_class = classGrammer()
         classes = cpp_class.searchString(self.getHeaderContents())
         for item in classes:
             temp = cppClass(item)
@@ -215,6 +216,7 @@ class Result:
 class cppClass:
     def __init__(self, parseRes):
         temp = parseRes
+        c_function, virtual_function, override_func = functionGrammer()
         self.name = temp.name
         self.parents = temp.parents.asList() if temp.parents else []
         self.body = temp.body
