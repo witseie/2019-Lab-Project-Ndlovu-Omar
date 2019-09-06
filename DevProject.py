@@ -4,8 +4,10 @@ Created on Thu Aug  1 08:13:01 2019
 
 @author: Ashraf
 """
+
 import os#Imports: os used for accessing files and folders
 keywords = ['const','static','enum', 'enum class','vector', 'pointers']#A list of the features. Used by fuctions when performing taks in for loops.
+
 
 def removeComments(string):
     #Function for removing comments from source code files.
@@ -23,6 +25,7 @@ def makeGrammer(string):#Makes a ``grammar" for the searchString() function of p
     Grammer = keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name) + Optional(Char(';')) if string == 'static' else keyword + Char("{") | keyword + Char(";") | keyword + Suppress(name)#As above, so below (one-size-fits-all grammer for all the keywords) 
     Grammer = Grammer.ignore(cppStyleComment)#Ignore comments when looking for the keywords/grammer
     return Grammer
+
 
 def makeABCGrammer(className):#Makes a definition for Abstract base classes
     from pyparsing import CaselessLiteral, Char, Combine
@@ -77,6 +80,7 @@ def STLGrammer():#Smart pointers, vectors, maps, auto, and raw pointers all in t
 
 
 class DevProject:#This class represents a single Software Development II project.
+
     def __init__(self, directory):
         self.__directory = directory#Project dir
         self.__files, self.__header_files = self.readFiles()#Get the File objects that represent files
@@ -220,6 +224,7 @@ class Result:#Results of analysis in the form of vectors and lists. Will be used
         print(string)
         print(self.__use_cases)
 
+
 class cppClass:#A class that represents a C++ class. It performs analysis on a class after it is parsed.
     def __init__(self, parseRes):
         temp = parseRes
@@ -234,3 +239,4 @@ class cppClass:#A class that represents a C++ class. It performs analysis on a c
         self.inheritance = 1 if self.parents else 0
         self.abstr_base_class = 1 if (len(self.functions)==len(self.abstr_functions) and len(self.functions) != 0) else 0
         self.override = 1 if (len(self.override_functions) != 0) else 0
+
