@@ -4,26 +4,27 @@ Created on Mon Aug  5 18:35:30 2019
 
 @author: Ashraf
 """
-import requests, json, os, getpass
-demis = ['2018-project-560895-Linda','2018-project-571133-Kyle','2018-project-714227-Kayla','2018-project-717931-Kishan','2018-project-816424-Conrad','2018-project-837873-Malu']
+import requests, json, os, getpass#Imports: os, json for cache access, requests for GETting repo JSON from search API
+demis = ['571133-Govender-2017-Project','798089-Monyai-2017-Project','704447-Ping-2017-Project','1257547-Kolade-2017-Project','560895-Khumalo-2017-Project','2018-project-560895-Linda','2018-project-571133-Kyle','2018-project-714227-Kayla','2018-project-717931-Kishan','2018-project-816424-Conrad','2018-project-837873-Malu']#These were the demis in 2017 and 2018, the repos do not contain the word demi.
 
-def main():
+def main():#Main for getting user pass etc.
     user, pswd, year, max_repos = getInput()
     cloneAllProjects(user, pswd, year, max_repos)
 
-def getRepoNames(user, pswd, year = '2018', max_repos = '100', access_token = '146da8c3ad930d598318a94068fe158c716f6496'):
-    cacheDirectory = os.getcwd() +os.sep+r'.cache'
+def getRepoNames(user, pswd, year = '2018', max_repos = '1000', access_token = '146da8c3ad930d598318a94068fe158c716f6496'):
+    #Function that searches for repos using the Github search api
+    cacheDirectory = os.getcwd() +os.sep+r'.cache'#uses json to cache the search results
     if not os.path.exists(cacheDirectory):
         os.makedirs(cacheDirectory)
-    filename = cacheDirectory + os.sep + 'Repos-' + year + '-max=' + max_repos +'.json'
-    if not os.path.exists(filename):
+    filename = cacheDirectory + os.sep + 'Repos-' + year + '-max=' + max_repos +'.json'#cache filename naming convention
+    if not os.path.exists(filename):#search if no cache
         headers = {
             'Accept': 'application/vnd.github.mercy-preview+json',
             'Content-type': 'application/json',
         }
         params = (
-            ('q', 'org:witseie-elen3009 '+ year +'-project-'),
-            ('access_token', access_token),
+            ('q', 'org:witseie-elen3009 '+ year +'-project-'),#The specific convention used when naming project repos.
+            ('access_token', access_token),#Does this work? doesn't seem to.
             ('per_page' , max_repos),
         )
         response = requests.get('https://api.github.com/search/repositories', headers=headers, params=params, auth=(user, pswd))
@@ -41,6 +42,7 @@ def getRepoNames(user, pswd, year = '2018', max_repos = '100', access_token = '1
     return names
 
 def cloneAllProjects(user, pswd, year = '2018', max_repos = '100', directory = os.getcwd() + os.sep + r'Repositories'):
+    #A function that clones all the projects in a search. checks cache for the search results.
     repos = getRepoNames(user, pswd, year, max_repos)
     repos = str(len(repos))
     print(repos + ' repositories found.')
@@ -59,13 +61,13 @@ def cloneAllProjects(user, pswd, year = '2018', max_repos = '100', directory = o
     os.chdir(cacheDirectory)
     os.remove(filename)
 
-def cloneProject(repo):
+def cloneProject(repo):#Clones a repo.
     name = repo['name']
     if ((name not in demis) and ('Demi' not in name)):
         print('Cloning repository: ' + name)
-        os.system('git clone --depth 1 ' + repo['ssh_url'])
+        os.system('git clone --depth 1 ' + repo['ssh_url'])#Performs a shallow clone of the repo. Need Git installed and authenticated correctly.
 
-def getInput():
+def getInput():#for main
     while True:
         user = input('Enter GitHub user name: \n')
         break
