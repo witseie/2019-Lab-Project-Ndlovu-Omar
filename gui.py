@@ -458,7 +458,7 @@ class PageFive(tk.Frame):
                 '''Number of projects that used public inheritance: ''' + str(obj.public_inheritance) + '''\n'''
                 '''Number of projects that use abstract base classes: ''' + str(obj.abstr_base_classes) + '''\n'''
                + str(obj.abc_used) + ''' used the ABC correctly at least once and ...'''
-                + str(obj.override) + ''' did not use the "override" keyword.''')
+                + str(obj.override) + '''used the "override" keyword.''')
        
         
         df = pd.DataFrame({'Features':['Average No.'+'\n'+'of Classes','No. of Projects with classes'+'\n'+'below average'
