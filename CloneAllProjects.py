@@ -42,6 +42,7 @@ def getRepoNames(user, pswd, year = '2018', max_repos = '1000', access_token = '
     return names
 
 def cloneAllProjects(user, pswd, year = '2018', max_repos = '100', directory = os.getcwd() + os.sep + r'Repositories'):
+    #A function that clones all the projects in a search. checks cache for the search results.
     repos = getRepoNames(user, pswd, year, max_repos)
     repos = str(len(repos))
     print(repos + ' repositories found.')
@@ -60,11 +61,11 @@ def cloneAllProjects(user, pswd, year = '2018', max_repos = '100', directory = o
     os.chdir(cacheDirectory)
     os.remove(filename)
 
-def cloneProject(repo):
+def cloneProject(repo):#Clones a repo.
     name = repo['name']
     if ((name not in demis) and ('Demi' not in name)):
         print('Cloning repository: ' + name)
-        os.system('git clone --depth 1 ' + repo['ssh_url'])
+        os.system('git clone --depth 1 ' + repo['ssh_url'])#Performs a shallow clone of the repo. Need Git installed and authenticated correctly.
 
 def getInput():#for main
     while True:

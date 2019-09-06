@@ -50,8 +50,6 @@ def functionGrammer():#Function for different types of functions (normal, virtua
     override_func = override_func.ignore(cppStyleComment)
     return c_function, virtual_function, override_func
 
-
-
 def classGrammer():#Function for defining the way a class is defined.
     from pyparsing import Word, alphas, alphanums, CaselessKeyword, Suppress, Group, nestedExpr, Char, originalTextFor, delimitedList, Optional
     cppName = Word(alphas+':_', alphanums+':_')#Identifiers
@@ -64,17 +62,13 @@ def classGrammer():#Function for defining the way a class is defined.
     Grammer = (class_keyword + class_name("name") + Optional(inherits)("parents") + (originalTextFor(class_body)("body")))#Definition
     Grammer = Grammer.ignore(scoped_enum)#See above on scoped_enum
     return Grammer
-
-
-
+  
 def STLGrammer():#Smart pointers, vectors, maps, auto, and raw pointers all in two definitions. It's a bargain!
     from pyparsing import alphas, alphanums, CaselessLiteral, CaselessKeyword, Char, Word, Suppress, FollowedBy, Optional
     cppName = Suppress(Word(alphas+'_', alphanums+':_,') + ~Word('\n'))
     ptr_grammer = CaselessLiteral('unique_ptr')| CaselessLiteral('shared_ptr') | CaselessLiteral('make_shared') | CaselessLiteral('make_unique') | cppName + ~Char('>') + Char('*') + cppName| cppName + ~Char('>') + Char('&') + cppName
     vec_grammer = CaselessLiteral('vector') + FollowedBy(Char('<')) | CaselessLiteral('vector') + FollowedBy(Char('<') + Optional('std::') + CaselessLiteral('vector')) | CaselessLiteral('map') + FollowedBy(Char('<')) | CaselessKeyword('auto')
     return ptr_grammer, vec_grammer
-
-
 
 class DevProject:#This class represents a single Software Development II project.
     def __init__(self, directory):
