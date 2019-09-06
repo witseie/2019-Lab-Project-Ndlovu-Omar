@@ -14,7 +14,7 @@ Full Anaconda package must be installed to run packages
 
 2.Press Search for the results on that repository
 
-3.Clone all projects (ensure your machine has ssh authorisation for Github adn credentials have permissions)
+3.Clone all projects (ensure your machine has ssh authorisation for Github and credentials have permissions)
 
 4.Analyse All Projects
 
