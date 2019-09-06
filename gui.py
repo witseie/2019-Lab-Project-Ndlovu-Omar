@@ -105,21 +105,21 @@ class ProjectAnalyser(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
         
-    
                
 class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
 
-      
         lbox = tk.Listbox(self)
         lbox.place(relx=0.533, rely=0.044, relheight=0.858, relwidth=0.44)
                                
         button = ttk.Button(self, text="Analyse",
                             command=lambda:(threading.Thread(target=selected,args=(lbox,controller,)).start()))
+
         button.place(relx=0.533, rely=0.911, height=32, width=68)
   
+
 
         button2 = ttk.Button(self, text="Analyse All",
                              command=lambda:(threading.Thread(target=allprojects,args=(controller,)).start()))
@@ -133,14 +133,19 @@ class StartPage(tk.Frame):
         
         Label1 = tk.Label(self)
         Label1.place(relx=0.05, rely=0.044, height=31, width=59)
+
+                  
+    
         Label1.configure(text='''Username :''')
         
         Label2 = tk.Label(self)
         Label2.place(relx=0.05, rely=0.111, height=31, width=55)
+
         Label2.configure(text='''Password :''')
 
         Label3 = tk.Label(self)
         Label3.place(relx=0.05, rely=0.178, height=31, width=43)
+
         Label3.configure(text='''Year :''')
         
         Entry1 = tk.Entry(self)
@@ -150,10 +155,12 @@ class StartPage(tk.Frame):
 
         Entry2 = tk.Entry(self)
         Entry2.place(relx=0.15, rely=0.111,height=26, relwidth=0.357)
+
         Entry2.configure(show='*')
 
         Entry3 = tk.Entry(self)
         Entry3.place(relx=0.15, rely=0.178,height=26, relwidth=0.357)
+
         Entry3.configure(width=214)
         
         button3 = ttk.Button(self, text="Search",command=lambda: repoDetails(Entry1,Entry2,Entry3,lbox))
@@ -161,8 +168,10 @@ class StartPage(tk.Frame):
         
         button4 = ttk.Button(self, text="Clone All",
                              command=lambda:(threading.Thread(target=userDetails,args=(Entry1,Entry2,Entry3,)).start()))
+
         button4.place(relx=0.333, rely=0.254, height=32, width=90)
                         
+
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -206,6 +215,7 @@ class PageOne(tk.Frame):
     
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
+
 
         df.plot(kind='bar', legend=True, ax=ax1, rot =0)
         ax1.set_title('Keywords Vs. Extent of use',fontweight="bold")
@@ -282,7 +292,7 @@ class PageThree(tk.Frame):
         tabControl.add(tab1,text="Enum & Pointer Results")
        
         tabControl.pack(expan = 1,fill = "both")
-#               
+              
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot3(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -325,6 +335,7 @@ class PageThree(tk.Frame):
         plt.title('Pointer Usage Summary')
         plt.pie(df1['Pointer Usage'],labels=df1['index'],autopct='%1.1f%%',explode=[0,0.1,0])
 
+
         canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -341,7 +352,7 @@ class PageFour(tk.Frame):
         tabControl.add(tab1,text="Project Keyword Results")
        
         tabControl.pack(expan = 1,fill = "both")
-              
+
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot4(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -356,6 +367,7 @@ class PageFour(tk.Frame):
     def plot4(self,canvas,figure1):
         Label1 = tk.Label(self)
         Label1.place(relx=0.45, rely=0.050, height=120, width=500)
+
         Label1.configure(text='''Number of projects that used constant functions, variables or arguments: ''' + str(obj.const)+ '''\n'''+
                          '''Number of projects that used static functions or variables: ''' + str(obj.static)+ ''' \n'''+
                          '''Number of projects that used enumerations: ''' + str(obj.enum-obj.enum_class) + '''\n''' +
@@ -368,7 +380,6 @@ class PageFour(tk.Frame):
 
         figure1,axes = plt.subplots(nrows=1, ncols=2,figsize=(15,5))
         
-     
         df = pd.DataFrame({'Keyword Features':['const','static','enum','enum class','override'],
         'usage value':[obj.const,obj.static,(obj.enum - obj.enum_class), obj.enum_class,obj.override]})
                 
@@ -400,7 +411,7 @@ class PageFive(tk.Frame):
         tabControl.add(tab1,text="Project Keyword Results")
        
         tabControl.pack(expan = 1,fill = "both")
-               
+
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot5(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -415,13 +426,14 @@ class PageFive(tk.Frame):
     def plot5(self,canvas,figure1):
         Label1 = tk.Label(self)
         Label1.place(relx=0.45, rely=0.040, height=120, width=500)
+
         Label1.configure(text='''Average number of classes: ''' + str(obj.classes) + '''\n'''+
                 '''Number of projects with number of classes below average: ''' + str(obj.const_args) + '''\n'''
                 '''Number of projects that used public inheritance: ''' + str(obj.public_inheritance) + '''\n'''
                 '''Number of projects that use abstract base classes: ''' + str(obj.abstr_base_classes) + '''\n'''
                + str(obj.abc_used) + ''' used the ABC correctly at least once and ...'''
                 + str(obj.override) + '''used the "override" keyword.''')
-       
+
         
         df = pd.DataFrame({'Features':['Average No.'+'\n'+'of Classes','No. of Projects with classes'+'\n'+'below average'
                                         ,'Public inheritance','Abstract Base Classes (ABC)','Projects Used'+'\n'+ 'ABC correctly'], 
