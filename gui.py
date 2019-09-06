@@ -2,7 +2,7 @@
 """
 Created on Sun Aug 18 22:28:29 2019
 
-@author: user
+@author: Sanele
 """
 import numpy as np
 import pandas as pd
@@ -24,12 +24,12 @@ import os
 import CloneAllProjects
 import AnalyseProject
 
-
 LARGE_FONT= ("Verdana", 12)
 
 obj = AnalyseProject.ProjectResults
 flist = []
 
+#select project from listbox
 def selected(lbox,controller):
     global obj
     all_items = lbox.get(0,tk.END)
@@ -41,13 +41,14 @@ def selected(lbox,controller):
     controller.show_frame(PageOne)
     return obj
 
+#analyse all projects 
 def allprojects(controller):
     global obj
     res = AnalyseProject.AnalyseAllProjects()
     controller.show_frame(PageFour)
     obj = res
     return obj
-
+#get repository names 
 def repoDetails(Entry1,Entry2,Entry3,lbox):
     global flist
     username = Entry1.get()
@@ -60,15 +61,15 @@ def repoDetails(Entry1,Entry2,Entry3,lbox):
     for item in flist:
         lbox.insert(tk.END, item)
     return flist
-
+#get user credentials
 def userDetails(Entry1,Entry2,Entry3):
     global flist
     username = Entry1.get()
     password = Entry2.get()
     year = Entry3.get()  
     CloneAllProjects.cloneAllProjects(username,password,year)
- 
 
+#initialise Tkinter pages
 class ProjectAnalyser(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -77,7 +78,7 @@ class ProjectAnalyser(tk.Tk):
 
         tk.Tk.iconbitmap(self, default=None)
         tk.Tk.wm_title(self, "C++ Analyser Program")
-        
+        #set screen dimensions
         screen_width = str(self.winfo_screenwidth()//2)
         screen_height = str(self.winfo_screenheight()//2)
         resolution =screen_width +'x'+screen_height
@@ -89,7 +90,7 @@ class ProjectAnalyser(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         
         self.frames = {}
-
+        #create page frames
         for F in (StartPage,PageOne,PageTwo,PageThree,PageFour,PageFive):
 
             frame = F(container, self)
@@ -101,16 +102,15 @@ class ProjectAnalyser(tk.Tk):
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
-
         frame = self.frames[cont]
         frame.tkraise()
+        
                
 class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
 
-        #flist = os.listdir(os.getcwd()+os.sep+r'Repositories')
         lbox = tk.Listbox(self)
         lbox.place(relx=0.533, rely=0.044, relheight=0.858, relwidth=0.44)
                                
@@ -119,67 +119,48 @@ class StartPage(tk.Frame):
 
         button.place(relx=0.533, rely=0.911, height=32, width=68)
   
-        #button.pack(rex=0.533, rely=0.911, height=32, width=68) command=lambda:controller.show_frame(PageOne))
-        
+
+
         button2 = ttk.Button(self, text="Analyse All",
                              command=lambda:(threading.Thread(target=allprojects,args=(controller,)).start()))
         button2.place(relx=0.8, rely=0.911, height=32, width=98)
         
-            
-       
-         
-        TProgressbar1 = ttk.Progressbar(self)
-        TProgressbar1.place(relx=0.1, rely=0.422, relwidth=0.417
-                , relheight=0.0, height=22)
-        TProgressbar1.configure(length="250")
+              
+#        TProgressbar1 = ttk.Progressbar(self)
+#        TProgressbar1.place(relx=0.1, rely=0.422, relwidth=0.417
+#                , relheight=0.0, height=22)
+#        TProgressbar1.configure(length="250")
         
         Label1 = tk.Label(self)
         Label1.place(relx=0.05, rely=0.044, height=31, width=59)
-#        Label1.configure(background="#d9d9d9")
-#        Label1.configure(disabledforeground="#a3a3a3")
-#        Label1.configure(foreground="#000000")
+
+                  
+    
         Label1.configure(text='''Username :''')
         
         Label2 = tk.Label(self)
         Label2.place(relx=0.05, rely=0.111, height=31, width=55)
-#        self.Label2.configure(background="#d9d9d9")
-#        self.Label2.configure(disabledforeground="#a3a3a3")
-#        self.Label2.configure(foreground="#000000")
+
         Label2.configure(text='''Password :''')
 
         Label3 = tk.Label(self)
         Label3.place(relx=0.05, rely=0.178, height=31, width=43)
-#        self.Label3.configure(background="#d9d9d9")
-#        self.Label3.configure(disabledforeground="#a3a3a3")
-#        self.Label3.configure(foreground="#000000")
+
         Label3.configure(text='''Year :''')
         
         Entry1 = tk.Entry(self)
         Entry1.place(relx=0.15, rely=0.044,height=26, relwidth=0.357)
-#        self.Entry1.configure(background="white")
-#        self.Entry1.configure(disabledforeground="#a3a3a3")
-#        self.Entry1.configure(font="TkFixedFont")
-#        self.Entry1.configure(foreground="#000000")
-#        self.Entry1.configure(insertbackground="black")
+
         Entry1.configure(width=214)
 
         Entry2 = tk.Entry(self)
         Entry2.place(relx=0.15, rely=0.111,height=26, relwidth=0.357)
-#        self.Entry2.configure(background="white")
-#        self.Entry2.configure(disabledforeground="#a3a3a3")
-#        self.Entry2.configure(font="TkFixedFont")
-#        self.Entry2.configure(foreground="#000000")
-#        self.Entry2.configure(insertbackground="black")
-#        self.Entry2.configure(width=214)
+
         Entry2.configure(show='*')
 
         Entry3 = tk.Entry(self)
         Entry3.place(relx=0.15, rely=0.178,height=26, relwidth=0.357)
-#        self.Entry3.configure(background="white")
-#        self.Entry3.configure(disabledforeground="#a3a3a3")
-#        self.Entry3.configure(font="TkFixedFont")
-#        self.Entry3.configure(foreground="#000000")
-#        self.Entry3.configure(insertbackground="black")
+
         Entry3.configure(width=214)
         
         button3 = ttk.Button(self, text="Search",command=lambda: repoDetails(Entry1,Entry2,Entry3,lbox))
@@ -187,10 +168,10 @@ class StartPage(tk.Frame):
         
         button4 = ttk.Button(self, text="Clone All",
                              command=lambda:(threading.Thread(target=userDetails,args=(Entry1,Entry2,Entry3,)).start()))
-        
+
         button4.place(relx=0.333, rely=0.254, height=32, width=90)
-   
-                     
+                        
+
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -234,6 +215,7 @@ class PageOne(tk.Frame):
     
         figure1 = plt.Figure(figsize=(5,5), dpi=100)
         ax1 = figure1.add_subplot(111)
+
 
         df.plot(kind='bar', legend=True, ax=ax1, rot =0)
         ax1.set_title('Keywords Vs. Extent of use',fontweight="bold")
@@ -310,7 +292,7 @@ class PageThree(tk.Frame):
         tabControl.add(tab1,text="Enum & Pointer Results")
        
         tabControl.pack(expan = 1,fill = "both")
-#               
+              
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot3(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -340,23 +322,20 @@ class PageThree(tk.Frame):
                                        'unique pointer','shared pointer','raw pointer'], 
     'usage value':[(obj.enum - obj.enum_class), obj.enum_class, obj.unique,obj.shared,obj.raw]})
         
-        #figure1 = plt.Figure(figsize=(5,5), dpi=100)
-        #ax1 = figure1.add_subplot(211)
-        df.plot.bar(x='Features', y='usage value', rot=0, ax=axes[0])   
-#        canvas = FigureCanvasTkAgg(figure1, self)
-#        canvas.draw()
-#        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        ax1 = df.plot.bar(x='Features', y='usage value', rot=0, ax=axes[0])
+       
+        for p in ax1.patches:
+            ax1.annotate(str(p.get_height()),(p.get_x() * 1.005, p.get_height() * 1.005))  
+
         raw =  {'index': ['unique Pointers', 'shared Pointers', 'raw pointers'],
                 'Pointer Usage': [obj.unique,obj.shared ,obj.raw]}
-#        df1 = pd.DataFrame({'Pointer Usage': [obj.unique,obj.shared ,obj.raw]},
-#                  index=['Unique Pointers', 'Shared Pointers', 'Raw Pointers'])
+
         df1 = pd.DataFrame(raw, columns= ['index','Pointer Usage'])
-#                  index=['Unique Pointers', 'Shared Pointers', 'Raw Pointers'])
-        #figure2 = plt.Figure(figsize=(5,5), dpi=100)
-        #ax2 = figure2.add_subplot(111)
         plt.title('Pointer Usage Summary')
         plt.pie(df1['Pointer Usage'],labels=df1['index'],autopct='%1.1f%%',explode=[0,0.1,0])
-        #df1.plot.pie(ax = axes[1],subplots=True,autopct ='%1.0%%f')
+
+
         canvas = FigureCanvasTkAgg(figure1, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -373,7 +352,7 @@ class PageFour(tk.Frame):
         tabControl.add(tab1,text="Project Keyword Results")
        
         tabControl.pack(expan = 1,fill = "both")
-#               
+
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot4(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -388,9 +367,7 @@ class PageFour(tk.Frame):
     def plot4(self,canvas,figure1):
         Label1 = tk.Label(self)
         Label1.place(relx=0.45, rely=0.050, height=120, width=500)
-#        Label1.configure(background="#d9d9d9")
-#        Label1.configure(disabledforeground="#a3a3a3")
-#        Label1.configure(foreground="#000000")
+
         Label1.configure(text='''Number of projects that used constant functions, variables or arguments: ''' + str(obj.const)+ '''\n'''+
                          '''Number of projects that used static functions or variables: ''' + str(obj.static)+ ''' \n'''+
                          '''Number of projects that used enumerations: ''' + str(obj.enum-obj.enum_class) + '''\n''' +
@@ -403,7 +380,6 @@ class PageFour(tk.Frame):
 
         figure1,axes = plt.subplots(nrows=1, ncols=2,figsize=(15,5))
         
-        #axes[0].title('Keywords Usage Summary')
         df = pd.DataFrame({'Keyword Features':['const','static','enum','enum class','override'],
         'usage value':[obj.const,obj.static,(obj.enum - obj.enum_class), obj.enum_class,obj.override]})
                 
@@ -435,7 +411,7 @@ class PageFive(tk.Frame):
         tabControl.add(tab1,text="Project Keyword Results")
        
         tabControl.pack(expan = 1,fill = "both")
-#               
+
         button1 = ttk.Button(self, text="View Results",
                             command=lambda:(self.plot5(canvas,figure1)))
         button2 = ttk.Button(self, text="Back to Home",
@@ -450,16 +426,14 @@ class PageFive(tk.Frame):
     def plot5(self,canvas,figure1):
         Label1 = tk.Label(self)
         Label1.place(relx=0.45, rely=0.040, height=120, width=500)
-#        Label1.configure(background="#d9d9d9")
-#        Label1.configure(disabledforeground="#a3a3a3")
-#        Label1.configure(foreground="#000000")
+
         Label1.configure(text='''Average number of classes: ''' + str(obj.classes) + '''\n'''+
                 '''Number of projects with number of classes below average: ''' + str(obj.const_args) + '''\n'''
                 '''Number of projects that used public inheritance: ''' + str(obj.public_inheritance) + '''\n'''
                 '''Number of projects that use abstract base classes: ''' + str(obj.abstr_base_classes) + '''\n'''
                + str(obj.abc_used) + ''' used the ABC correctly at least once and ...'''
-                + str(obj.override) + ''' did not use the "override" keyword.''')
-       
+                + str(obj.override) + '''used the "override" keyword.''')
+
         
         df = pd.DataFrame({'Features':['Average No.'+'\n'+'of Classes','No. of Projects with classes'+'\n'+'below average'
                                         ,'Public inheritance','Abstract Base Classes (ABC)','Projects Used'+'\n'+ 'ABC correctly'], 
