@@ -8,8 +8,6 @@ Final year Lab project to analyse the use of C++ features
 
 -Full Anaconda package must be installed to run packages 
 
--or run gui.exe application 
-
 # Guide on How it Works
 
 1.Enter credentials and year of the repository
