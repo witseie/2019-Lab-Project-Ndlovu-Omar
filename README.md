@@ -18,4 +18,6 @@ Full Anaconda package must be installed to run packages
 
 4.Analyse All Projects
 
-5.Analyse single project (*not currently able to analyse single projects in one session, have to re-run script)
+5.Use a mouse click to select the single project to be analysed (Enter will no select even though the project is higlighted)
+
+6.Analyse single project (*NB currently able to analyse single projects in one session, have to re-run script to view new results)
